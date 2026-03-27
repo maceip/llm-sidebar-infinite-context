@@ -176,6 +176,99 @@ async function waitForCompanion(extensionId, browser) {
   );
 }
 
+
+function buildAgentMemoryFixture() {
+  const now = Date.now();
+  return {
+    schemaVersion: 2,
+    updatedAt: now,
+    byScope: {
+      agent: {
+        scope: 'agent',
+        episodes: [
+          {
+            id: `mem_browser_${now}`,
+            kind: 'turn',
+            scope: 'agent',
+            ownerAgentId: 'primary-agent',
+            ownerTeamId: 'default-team',
+            summary:
+              'User prefers the browser memory harness to prove persistence and retrieval for the memory layer.',
+            keywords: ['browser', 'memory', 'persistence', 'retrieval', 'harness'],
+            createdAt: now,
+            accessCount: 0,
+            lastAccessedAt: now,
+            accessPolicy: {
+              tier: 'private',
+              readers: ['primary-agent'],
+              writers: ['primary-agent'],
+            },
+            provenance: {
+              sourceAgentId: 'primary-agent',
+              sourceTeamId: 'default-team',
+              createdAt: now,
+              revision: 1,
+            },
+          },
+        ],
+      },
+      team: { scope: 'team', episodes: [] },
+      global: { scope: 'global', episodes: [] },
+    },
+  };
+}
+
+async function runMemoryLayerScenario(extensionId, browser) {
+  const page = await browser.newPage();
+  await page.goto(`chrome-extension://${extensionId}/src/pages/browser-memory-test.html`, {
+    waitUntil: 'networkidle0',
+  });
+
+  const result = await page.evaluate(async (fixture) => {
+    const AGENT_MEMORY_KEY = 'agentMemory';
+    await chrome.storage.local.set({ [AGENT_MEMORY_KEY]: fixture });
+
+    const stats = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'getMemoryStats' }, (response) => {
+        resolve(response || null);
+      });
+    });
+
+    const stored = await chrome.storage.local.get([AGENT_MEMORY_KEY]);
+    return {
+      storedEpisodes:
+        stored?.[AGENT_MEMORY_KEY]?.byScope?.agent?.episodes?.length || 0,
+      stats,
+    };
+  }, buildAgentMemoryFixture());
+
+  if (
+    result.storedEpisodes !== 1 ||
+    !result.stats?.success ||
+    result.stats.episodeCount < 1 ||
+    !Array.isArray(result.stats.recentEpisodes) ||
+    !result.stats.recentEpisodes.some((episode) =>
+      String(episode.summary || '').includes('browser memory harness'),
+    )
+  ) {
+    throw new Error(`Memory layer scenario failed: ${JSON.stringify(result)}`);
+  }
+
+  return result;
+}
+
+async function runNativeConnectivityScenario(extensionId, browser) {
+  const initialStatus = await waitForCompanion(extensionId, browser);
+  await new Promise((resolve) => setTimeout(resolve, 23000));
+  const followUpStatus = await waitForCompanion(extensionId, browser);
+
+  if (!followUpStatus.state.lastPongAt) {
+    throw new Error(`Expected heartbeat pong in native status: ${JSON.stringify(followUpStatus)}`);
+  }
+
+  return { initialStatus, followUpStatus };
+}
+
 async function main() {
   const extensionId = deriveExtensionId(key);
   await buildExtension();
@@ -215,8 +308,18 @@ async function main() {
       { timeout: 30000 },
     );
     console.log(`service worker target: ${workerTarget.url()}`);
-    const status = await waitForCompanion(extensionId, browser);
-    console.log(JSON.stringify({ extensionId, status }, null, 2));
+    const nativeConnectivity = await runNativeConnectivityScenario(
+      extensionId,
+      browser,
+    );
+    const memoryLayer = await runMemoryLayerScenario(extensionId, browser);
+    console.log(
+      JSON.stringify(
+        { extensionId, nativeConnectivity, memoryLayer },
+        null,
+        2,
+      ),
+    );
   } finally {
     await browser.close();
   }

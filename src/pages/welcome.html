@@ -50,8 +50,9 @@
           </div>
           <h1>Welcome!</h1>
           <p>
-            Your AI-powered browsing companion is ready. Here's how to get
-            started in 30 seconds.
+            Your sidebar assistant is ready, and the native overlay companion
+            foundation is now included for resilient browser-to-native
+            connectivity.
           </p>
         </div>
 
@@ -84,7 +85,8 @@
               <h3>Open the sidebar</h3>
               <p>
                 Click the extension icon in your toolbar, or use the keyboard
-                shortcut below to open the sidebar panel.
+                shortcut below to open the sidebar panel and configure the core
+                extension experience.
               </p>
             </div>
           </div>
@@ -95,7 +97,22 @@
               <h3>Paste your API key</h3>
               <p>
                 Open Settings in the sidebar, paste your API key, and click
-                Save. You're all set!
+                Save. Chat, pin tabs, and memory features will work entirely in
+                the browser.
+              </p>
+            </div>
+          </div>
+
+          <div class="welcome-step">
+            <div class="welcome-step-number">4</div>
+            <div class="welcome-step-content">
+              <h3>Understand the overlay companion</h3>
+              <p>
+                This build also includes a Rust native companion foundation that
+                keeps a durable link to the extension through native messaging.
+                The visible HUD/overlay target is macOS and Windows; on Linux,
+                the current work validates connectivity and heartbeat behavior
+                rather than drawing a live overlay.
               </p>
             </div>
           </div>
@@ -167,7 +184,7 @@
               </svg>
             </div>
             <h4>Smart Context</h4>
-            <p>Auto-reads the page you're browsing for relevant answers</p>
+            <p>Reads the page you're browsing and adds relevant context to chat</p>
           </div>
 
           <div class="feature-card">
@@ -193,7 +210,7 @@
               </svg>
             </div>
             <h4>AI Memory</h4>
-            <p>Remembers your conversation context across sessions</p>
+            <p>Persists long-term memory locally and retrieves it across sessions</p>
           </div>
 
           <div class="feature-card">
@@ -222,6 +239,114 @@
             <h4>Multi-Tab</h4>
             <p>Summarize and compare content across multiple tabs</p>
           </div>
+
+          <div class="feature-card">
+            <div
+              class="feature-card-icon"
+              style="
+                background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M16 18 22 12 16 6" />
+                <path d="M8 6 2 12 8 18" />
+              </svg>
+            </div>
+            <h4>Native Bridge</h4>
+            <p>Maintains a reconnecting JSON-RPC link to the Rust companion</p>
+          </div>
+
+          <div class="feature-card">
+            <div
+              class="feature-card-icon"
+              style="
+                background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect width="14" height="14" x="5" y="5" rx="2" />
+                <path d="M9 9h6" />
+                <path d="M9 12h6" />
+                <path d="M9 15h4" />
+              </svg>
+            </div>
+            <h4>Overlay Foundation</h4>
+            <p>Documents the native HUD direction for macOS and Windows builds</p>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin-top: 8px;
+            padding: 16px;
+            background: var(--bg-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+          "
+        >
+          <h2
+            style="
+              margin: 0 0 8px;
+              font-size: 16px;
+              font-weight: 700;
+              color: var(--text-primary);
+            "
+          >
+            Native overlay companion: current status
+          </h2>
+          <p
+            style="
+              margin: 0 0 8px;
+              font-size: 13px;
+              line-height: 1.6;
+              color: var(--text-secondary);
+            "
+          >
+            The extension now has a native-messaging bridge to a Rust companion
+            service with reconnect and heartbeat support. That foundation is
+            meant to make the extension survive Chrome runtime churn more
+            gracefully.
+          </p>
+          <ul
+            style="
+              margin: 0;
+              padding-left: 18px;
+              color: var(--text-secondary);
+              font-size: 13px;
+              line-height: 1.7;
+            "
+          >
+            <li>Visible HUD / overlay target: macOS and Windows.</li>
+            <li>
+              Linux currently validates extension-to-native connectivity, not a
+              visible overlay window.
+            </li>
+            <li>
+              The bundled test harness proves browser memory and native
+              heartbeat behavior in headless Chrome.
+            </li>
+          </ul>
         </div>
 
         <!-- Privacy Note -->
@@ -252,7 +377,8 @@
         <!-- CTA -->
         <div style="text-align: center; margin-top: 24px; padding-bottom: 32px">
           <p style="font-size: 13px; color: var(--text-muted); margin: 0">
-            Open the sidebar to start chatting. Happy browsing!
+            Open the sidebar to start chatting, and treat the native overlay
+            companion as an advanced foundation that will grow from here.
           </p>
         </div>
       </div>

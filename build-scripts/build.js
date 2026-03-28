@@ -65,6 +65,7 @@ async function build() {
     'welcome.html',
     'website.html',
     'native-companion-test.html',
+    'browser-memory-test.html',
   ];
   for (const page of htmlPages) {
     const htmlPath = path.join(srcDir, 'pages', page);

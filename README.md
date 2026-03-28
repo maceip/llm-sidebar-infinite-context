@@ -110,7 +110,7 @@ This repository now includes a Rust-based native companion foundation under `nat
 
 The native companion is designed around a durable daemon + native-messaging bridge split so the long-lived process can tolerate Chrome MV3 service-worker restarts and reconnect cleanly using JSON-RPC `hello`, `ping`, and `status` messages.
 
-The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, launches Chrome headless with the unpacked extension, and waits for the extension to report a connected native companion session.
+The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, launches Chrome headless with the unpacked extension, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
 
 Cross-platform note: the harness now resolves `npm.cmd` / `cargo.exe` correctly on Windows, but the fully automated native messaging registration path is currently validated end-to-end on Linux. Windows still needs registry-based native host registration before the full harness can be considered production-ready there.
 

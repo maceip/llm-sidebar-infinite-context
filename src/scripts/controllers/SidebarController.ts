@@ -124,9 +124,7 @@ export class SidebarController {
     this.memoryCount = document.getElementById('memory-count');
     this.memoryBadge = document.getElementById('memory-badge');
     this.memoryEpisodes = document.getElementById('memory-episodes');
-    this.memoryLastRetrieval = document.getElementById(
-      'memory-last-retrieval',
-    );
+    this.memoryLastRetrieval = document.getElementById('memory-last-retrieval');
     this.memoryPanelVizContainer = document.getElementById('memory-panel-viz');
 
     this.setupEventListeners();
@@ -621,8 +619,15 @@ export class SidebarController {
           this.showWelcomeMessage();
         }
       } else if (response && response.reply) {
-        const msgEl = await this.appendMessage('model', response.reply, duration);
-        if (response.contextSnapshot && response.contextSnapshot.retrievedEpisodes.length > 0) {
+        const msgEl = await this.appendMessage(
+          'model',
+          response.reply,
+          duration,
+        );
+        if (
+          response.contextSnapshot &&
+          response.contextSnapshot.retrievedEpisodes.length > 0
+        ) {
           this.attachContextRibbon(msgEl, response.contextSnapshot);
           this.pulseMemoryStatus(response.contextSnapshot);
         }

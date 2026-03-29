@@ -13,7 +13,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const HOST_NAME: &str = "com.llm_sidebar.native_host";
+const HOST_NAME: &str = "com.maceip.native_overlay_companion";
 const DEFAULT_EXTENSION_ID: &str = "hecgmgkofmopdcjlbaegcaanaadhomhb";
 
 fn main() {
@@ -64,9 +64,9 @@ fn install_dir() -> PathBuf {
 
 fn host_binary_name() -> &'static str {
     if cfg!(windows) {
-        "llm-sidebar-host.exe"
+        "overlay-companion.exe"
     } else {
-        "llm-sidebar-host"
+        "overlay-companion"
     }
 }
 
@@ -76,17 +76,14 @@ fn find_host_binary() -> Option<PathBuf> {
     let dir = exe.parent()?;
     let name = host_binary_name();
 
-    // Check same directory
-    let candidate = dir.join(name);
-    if candidate.exists() {
-        return Some(candidate);
-    }
-    // Check ../host/ (workspace build layout)
-    let candidate = dir.join("../host").join(name);
-    if candidate.exists() {
-        return Some(candidate);
-    }
-    None
+    let candidates = [
+        dir.join(name),
+        dir.join(".").join(name),
+        dir.join("..").join("overlay-companion").join(name),
+        dir.join("..").join("overlay-companion").join("target").join("debug").join(name),
+    ];
+
+    candidates.into_iter().find(|candidate| candidate.exists())
 }
 
 fn find_crx() -> Option<PathBuf> {
@@ -107,7 +104,7 @@ fn install(extension_id: &str) -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir_all(&dest_dir)?;
 
     // 1. Copy the native host binary
-    let host_src = find_host_binary().ok_or("Cannot find llm-sidebar-host binary next to installer")?;
+    let host_src = find_host_binary().ok_or("Cannot find overlay-companion binary next to installer")?;
     let host_dest = dest_dir.join(host_binary_name());
     println!("Copying native host to {}", host_dest.display());
     fs::copy(&host_src, &host_dest)?;

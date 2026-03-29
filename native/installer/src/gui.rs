@@ -82,13 +82,12 @@ fn apply_kinetic_grid_theme(ctx: &egui::Context) {
     let mut style = (*ctx.style()).clone();
 
     // 0px border radius everywhere (Kinetic Grid mandate)
-    style.visuals.window_rounding = egui::Rounding::ZERO;
-    style.visuals.widgets.noninteractive.rounding = egui::Rounding::ZERO;
-    style.visuals.widgets.inactive.rounding = egui::Rounding::ZERO;
-    style.visuals.widgets.hovered.rounding = egui::Rounding::ZERO;
-    style.visuals.widgets.active.rounding = egui::Rounding::ZERO;
-    style.visuals.widgets.open.rounding = egui::Rounding::ZERO;
-    style.visuals.menu_rounding = egui::Rounding::ZERO;
+    let zero_rounding = egui::Rounding::ZERO;
+    style.visuals.widgets.noninteractive.corner_radius = zero_rounding;
+    style.visuals.widgets.inactive.corner_radius = zero_rounding;
+    style.visuals.widgets.hovered.corner_radius = zero_rounding;
+    style.visuals.widgets.active.corner_radius = zero_rounding;
+    style.visuals.widgets.open.corner_radius = zero_rounding;
 
     // Dark theme foundation
     style.visuals.dark_mode = true;
@@ -184,7 +183,7 @@ impl eframe::App for Wizard {
 
                 // Content area
                 egui::Frame::none()
-                    .inner_margin(egui::Margin::symmetric(32.0, 8.0))
+                    .inner_margin(egui::Margin::symmetric(32, 8))
                     .show(ui, |ui| match self.step {
                         Step::Welcome => self.show_welcome(ui),
                         Step::BrowserDetection => self.show_browser_detection(ui),

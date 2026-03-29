@@ -112,6 +112,18 @@ export interface NativeCompanionStatusRequest {
   type: typeof MessageTypes.NATIVE_COMPANION_STATUS;
 }
 
+export interface ShowNativeOverlayRequest {
+  type: typeof MessageTypes.SHOW_NATIVE_OVERLAY;
+}
+
+export interface HideNativeOverlayRequest {
+  type: typeof MessageTypes.HIDE_NATIVE_OVERLAY;
+}
+
+export interface ToggleNativeOverlayRequest {
+  type: typeof MessageTypes.TOGGLE_NATIVE_OVERLAY;
+}
+
 export interface MemoryEpisodeSummary {
   id: string;
   kind: 'turn' | 'summary';
@@ -156,6 +168,7 @@ export interface NativeCompanionState {
   hostName: string;
   diagnostics: string[];
   overlayStatus: NativeOverlayStatus;
+  overlayVisible?: boolean;
   serviceStatus: NativeServiceStatus;
   supportedFeatures: string[];
 }
@@ -239,6 +252,7 @@ export interface NativeStatusResult {
   restartCount: number;
   platform: string;
   supportedFeatures: string[];
+  visible?: boolean;
 }
 
 export interface NativeEventParams {
@@ -272,7 +286,10 @@ export type ExtensionMessage =
   | AgentdropAnimateRequest
   | GetMemoryStatsRequest
   | GetCurrentTabRequest
-  | NativeCompanionStatusRequest;
+  | NativeCompanionStatusRequest
+  | ShowNativeOverlayRequest
+  | HideNativeOverlayRequest
+  | ToggleNativeOverlayRequest;
 
 export interface LLMResponse {
   reply?: string;

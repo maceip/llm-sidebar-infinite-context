@@ -38,9 +38,36 @@
           <span class="status-dot"></span>
           0 memories
         </span>
+        <span class="status-pill model" id="native-overlay-status-pill">
+          Overlay: checking
+        </span>
       </div>
 
       <div id="messages"></div>
+
+      <div id="native-overlay-panel" class="memory-panel">
+        <button id="native-overlay-toggle" class="memory-panel-header expanded">
+          <span class="memory-panel-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="14" height="14" x="5" y="5" rx="2" />
+              <path d="M9 9h6" />
+              <path d="M9 12h6" />
+              <path d="M9 15h4" />
+            </svg>
+            Native Overlay
+          </span>
+          <span class="memory-panel-badge" id="native-overlay-status">Disconnected</span>
+        </button>
+        <div id="native-overlay-body" class="memory-panel-body">
+          <div class="memory-indicator">
+            <span class="memory-label" id="native-overlay-meta">Checking native companion...</span>
+          </div>
+          <div class="button-group" style="margin-top: 8px">
+            <button id="show-native-overlay-button" title="Show native overlay">Show Overlay</button>
+            <button id="hide-native-overlay-button" title="Hide native overlay">Hide Overlay</button>
+          </div>
+        </div>
+      </div>
 
       <div id="memory-panel" class="memory-panel" style="display: none">
         <button id="memory-panel-toggle" class="memory-panel-header">
@@ -152,6 +179,12 @@
           <div class="button-group">
             <button id="agentdrop-button" title="Add Agent to Page">
               Agent Drop
+            </button>
+            <button id="show-native-overlay-button" title="Show native overlay">
+              Show Overlay
+            </button>
+            <button id="hide-native-overlay-button" title="Hide native overlay">
+              Hide Overlay
             </button>
             <button id="new-chat-button" title="New Chat">New Chat</button>
             <button id="toggle-settings-button" title="Settings">

@@ -223,6 +223,12 @@ export class BackgroundController {
           return await this.handleGetCurrentTab();
         case MessageTypes.NATIVE_COMPANION_STATUS:
           return this.handleNativeCompanionStatus();
+        case MessageTypes.SHOW_NATIVE_OVERLAY:
+          return await this.handleShowNativeOverlay();
+        case MessageTypes.HIDE_NATIVE_OVERLAY:
+          return await this.handleHideNativeOverlay();
+        case MessageTypes.TOGGLE_NATIVE_OVERLAY:
+          return await this.handleToggleNativeOverlay();
         default:
           return {
             error: `Unknown message type: ${(request as { type: unknown }).type}`,
@@ -540,6 +546,18 @@ export class BackgroundController {
       success: true,
       state: this.nativeCompanionService.getState(),
     };
+  }
+
+  private async handleShowNativeOverlay(): Promise<SuccessResponse> {
+    return this.nativeCompanionService.showOverlay();
+  }
+
+  private async handleHideNativeOverlay(): Promise<SuccessResponse> {
+    return this.nativeCompanionService.hideOverlay();
+  }
+
+  private async handleToggleNativeOverlay(): Promise<SuccessResponse> {
+    return this.nativeCompanionService.toggleOverlay();
   }
 
   private async getApiKey(): Promise<string | null> {

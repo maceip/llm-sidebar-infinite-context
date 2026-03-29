@@ -158,6 +158,9 @@ export const MessageTypes = {
   GET_MEMORY_STATS: 'getMemoryStats',
   GET_CURRENT_TAB: 'getCurrentTab',
   NATIVE_COMPANION_STATUS: 'nativeCompanionStatus',
+  SHOW_NATIVE_OVERLAY: 'showNativeOverlay',
+  HIDE_NATIVE_OVERLAY: 'hideNativeOverlay',
+  TOGGLE_NATIVE_OVERLAY: 'toggleNativeOverlay',
 } as const;
 
 export const StorageKeys = {

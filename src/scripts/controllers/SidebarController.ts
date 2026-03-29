@@ -28,6 +28,7 @@ import {
   CheckPinnedTabsResponse,
   GetHistoryResponse,
   MemoryStatsResponse,
+  NativeCompanionStatusResponse,
 } from '../types';
 import {
   ISyncStorageService,
@@ -59,6 +60,9 @@ export class SidebarController {
   private memoryCount: HTMLElement | null;
   private memoryBadge: HTMLElement | null;
   private memoryEpisodes: HTMLElement | null;
+  private nativeOverlayStatusPill: HTMLElement | null;
+  private showNativeOverlayButton: HTMLButtonElement;
+  private hideNativeOverlayButton: HTMLButtonElement;
 
   private pinnedContexts: TabInfo[] = [];
   private currentTab: TabInfo | null = null;
@@ -115,6 +119,15 @@ export class SidebarController {
     this.memoryCount = document.getElementById('memory-count');
     this.memoryBadge = document.getElementById('memory-badge');
     this.memoryEpisodes = document.getElementById('memory-episodes');
+    this.nativeOverlayStatusPill = document.getElementById(
+      'native-overlay-status-pill',
+    );
+    this.showNativeOverlayButton = document.getElementById(
+      'show-native-overlay-button',
+    ) as HTMLButtonElement;
+    this.hideNativeOverlayButton = document.getElementById(
+      'hide-native-overlay-button',
+    ) as HTMLButtonElement;
 
     this.setupEventListeners();
   }
@@ -161,6 +174,14 @@ export class SidebarController {
 
     this.agentdropButton.addEventListener('click', () => {
       this.triggerAgentdrop();
+    });
+
+    this.showNativeOverlayButton.addEventListener('click', () => {
+      void this.showNativeOverlay();
+    });
+
+    this.hideNativeOverlayButton.addEventListener('click', () => {
+      void this.hideNativeOverlay();
     });
 
     if (this.memoryPanelToggle && this.memoryPanelBody) {
@@ -272,9 +293,13 @@ export class SidebarController {
 
     // Load memory stats
     await this.refreshMemoryStats();
+    await this.refreshNativeOverlayStatus();
 
     // Periodic heartbeat to catch missed tab updates
-    this.refreshInterval = setInterval(() => this.refreshCurrentTab(), 2000);
+    this.refreshInterval = setInterval(() => {
+      void this.refreshCurrentTab();
+      void this.refreshNativeOverlayStatus();
+    }, 2000);
   }
 
   private async loadHistory() {
@@ -468,6 +493,60 @@ export class SidebarController {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+
+  private async refreshNativeOverlayStatus() {
+    try {
+      const response =
+        await this.messageService.sendMessage<NativeCompanionStatusResponse>({
+          type: MessageTypes.NATIVE_COMPANION_STATUS,
+        });
+      if (!response?.success || !this.nativeOverlayStatusPill) {
+        return;
+      }
+
+      const overlayStatus = response.state.overlayStatus;
+      const connectionState = response.state.connectionState;
+      const overlayVisible = response.state.overlayVisible;
+      const visibleLabel =
+        overlayStatus === 'unsupported'
+          ? 'unsupported'
+          : overlayVisible
+            ? 'visible'
+            : 'hidden';
+      const label = `Overlay: ${visibleLabel} / ${connectionState}`;
+      this.nativeOverlayStatusPill.textContent = label;
+      this.nativeOverlayStatusPill.title = response.state.diagnostics.join(' | ');
+      const enabled =
+        connectionState === 'connected' && overlayStatus !== 'unsupported';
+      this.showNativeOverlayButton.disabled = !enabled || overlayVisible === true;
+      this.hideNativeOverlayButton.disabled = !enabled || overlayVisible === false;
+    } catch {
+      if (this.nativeOverlayStatusPill) {
+        this.nativeOverlayStatusPill.textContent = 'Overlay: unavailable';
+      }
+    }
+  }
+
+  private async showNativeOverlay() {
+    const response = await this.messageService.sendMessage<SuccessResponse>({
+      type: MessageTypes.SHOW_NATIVE_OVERLAY,
+    });
+    if (!response?.success && response?.message) {
+      this.appendMessage('system', `System: ${response.message}`);
+    }
+    await this.refreshNativeOverlayStatus();
+  }
+
+  private async hideNativeOverlay() {
+    const response = await this.messageService.sendMessage<SuccessResponse>({
+      type: MessageTypes.HIDE_NATIVE_OVERLAY,
+    });
+    if (!response?.success && response?.message) {
+      this.appendMessage('system', `System: ${response.message}`);
+    }
+    await this.refreshNativeOverlayStatus();
   }
 
   private async saveApiKey() {

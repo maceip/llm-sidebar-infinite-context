@@ -83,8 +83,8 @@ pub fn run_diagnostics(extension_id: &str) -> String {
     } else {
         results.push(DiagnosticResult {
             label: "Overlay companion".into(),
-            status: DiagStatus::Warn,
-            detail: "Not installed (optional)".into(),
+            status: DiagStatus::Fail,
+            detail: "Missing required overlay companion binary".into(),
         });
     }
 

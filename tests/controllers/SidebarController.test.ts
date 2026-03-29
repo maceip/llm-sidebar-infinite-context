@@ -19,7 +19,11 @@ import { SidebarController } from '../../src/scripts/controllers/SidebarControll
 import { ISyncStorageService } from '../../src/scripts/services/storageService';
 import { IMessageService } from '../../src/scripts/services/messageService';
 import { MessageTypes, StorageKeys } from '../../src/scripts/constants';
-import { ExtensionMessage, ExtensionResponse } from '../../src/scripts/types';
+import {
+  ExtensionMessage,
+  ExtensionResponse,
+  NativeCompanionState,
+} from '../../src/scripts/types';
 import fs from 'fs';
 import path from 'path';
 
@@ -64,6 +68,23 @@ describe('SidebarController', () => {
       mockMessageService,
     );
   });
+
+  function createNativeState(
+    overrides: Partial<NativeCompanionState> = {},
+  ): NativeCompanionState {
+    return {
+      connectionState: 'connected',
+      extensionSessionId: 'session-1',
+      reconnectAttempt: 0,
+      transport: 'native-messaging',
+      hostName: 'com.llm_sidebar.native_overlay_companion',
+      diagnostics: [],
+      overlayStatus: 'running',
+      serviceStatus: 'ready',
+      supportedFeatures: ['native-messaging', 'json-rpc'],
+      ...overrides,
+    };
+  }
 
   describe('Initialization', () => {
     it('should hide API key container if key exists in storage', async () => {
@@ -110,6 +131,85 @@ describe('SidebarController', () => {
         'model-select',
       ) as HTMLSelectElement;
       expect(select.value).toBe('gemini-2.5-flash-lite');
+    });
+
+    it('should show Bridge Only when native messaging is connected but overlay is unsupported', async () => {
+      vi.mocked(mockMessageService.sendMessage).mockImplementation(
+        async (msg: ExtensionMessage) => {
+          if (msg.type === MessageTypes.NATIVE_COMPANION_STATUS) {
+            return {
+              success: true,
+              state: createNativeState({ overlayStatus: 'unsupported' }),
+            };
+          }
+          if (msg.type === MessageTypes.GET_HISTORY) {
+            return { success: true, history: [] };
+          }
+          if (msg.type === MessageTypes.GET_MEMORY_STATS) {
+            return {
+              success: true,
+              episodeCount: 0,
+              maxEpisodes: 160,
+              pinnedTabCount: 0,
+              recentEpisodes: [],
+            };
+          }
+          if (msg.type === MessageTypes.GET_CONTEXT) {
+            return { pinnedContexts: [], tab: null };
+          }
+          if (msg.type === MessageTypes.GET_CONTEXT_SNAPSHOT) {
+            return { success: true, snapshot: null };
+          }
+          return {};
+        },
+      );
+
+      await controller.start();
+
+      const label = document.getElementById('companion-label');
+      const pill = document.getElementById('status-companion');
+      const dot = document.getElementById('companion-dot');
+      expect(label?.textContent).toBe('Bridge Only');
+      expect(pill?.title).toContain('visible overlay unsupported');
+      expect(dot?.className).toContain('bridge-only');
+    });
+
+    it('should show No Native when the companion status request fails', async () => {
+      vi.mocked(mockMessageService.sendMessage).mockImplementation(
+        async (msg: ExtensionMessage) => {
+          if (msg.type === MessageTypes.NATIVE_COMPANION_STATUS) {
+            throw new Error('Native host not found');
+          }
+          if (msg.type === MessageTypes.GET_HISTORY) {
+            return { success: true, history: [] };
+          }
+          if (msg.type === MessageTypes.GET_MEMORY_STATS) {
+            return {
+              success: true,
+              episodeCount: 0,
+              maxEpisodes: 160,
+              pinnedTabCount: 0,
+              recentEpisodes: [],
+            };
+          }
+          if (msg.type === MessageTypes.GET_CONTEXT) {
+            return { pinnedContexts: [], tab: null };
+          }
+          if (msg.type === MessageTypes.GET_CONTEXT_SNAPSHOT) {
+            return { success: true, snapshot: null };
+          }
+          return {};
+        },
+      );
+
+      await controller.start();
+
+      const label = document.getElementById('companion-label');
+      const pill = document.getElementById('status-companion');
+      const dot = document.getElementById('companion-dot');
+      expect(label?.textContent).toBe('No Native');
+      expect(pill?.title).toContain('Native companion: disconnected');
+      expect(dot?.className).toContain('disconnected');
     });
   });
 

@@ -239,6 +239,27 @@ async function verifyInstallerArtifacts(extensionId) {
   };
 }
 
+async function mirrorManifestIntoUserDataDir(installerArtifacts) {
+  const sourceManifest = installerArtifacts.manifestChecks.find(
+    (item) => item.exists,
+  );
+  if (!sourceManifest) {
+    throw new Error('No installer-generated manifest available to mirror');
+  }
+
+  const profileNativeMessagingDir = path.join(userDataDir, 'NativeMessagingHosts');
+  await fse.ensureDir(profileNativeMessagingDir);
+  const destinationManifest = path.join(
+    profileNativeMessagingDir,
+    `${HOST_NAME}.json`,
+  );
+  await fse.copy(sourceManifest.manifestPath, destinationManifest);
+
+  return {
+    destinationManifest,
+  };
+}
+
 async function waitForCompanion(extensionId, browser) {
   const page = await browser.newPage();
   await page.goto(
@@ -415,6 +436,8 @@ async function main() {
   await prepareExtension(extensionId);
   await runInstaller(extensionId);
   const installerArtifacts = await verifyInstallerArtifacts(extensionId);
+  const mirroredProfileManifest =
+    await mirrorManifestIntoUserDataDir(installerArtifacts);
 
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -441,7 +464,14 @@ async function main() {
     const sidebarIndicator = await readSidebarIndicator(extensionId, browser);
     console.log(
       JSON.stringify(
-        { extensionId, installerArtifacts, nativeConnectivity, memoryLayer, sidebarIndicator },
+        {
+          extensionId,
+          installerArtifacts,
+          mirroredProfileManifest,
+          nativeConnectivity,
+          memoryLayer,
+          sidebarIndicator,
+        },
         null,
         2,
       ),

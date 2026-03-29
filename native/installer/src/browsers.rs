@@ -130,12 +130,35 @@ fn browser_candidates() -> Vec<Browser> {
 
 #[cfg(target_os = "linux")]
 fn is_browser_installed(candidate: &Browser) -> bool {
-    // Check if the browser's config directory parent exists
     candidate
         .native_messaging_dir
         .parent()
         .map(|p| p.exists())
         .unwrap_or(false)
+        || linux_browser_commands(candidate)
+            .iter()
+            .any(|command| command_in_path(command))
+}
+
+#[cfg(target_os = "linux")]
+fn linux_browser_commands(candidate: &Browser) -> &'static [&'static str] {
+    match candidate.variant {
+        BrowserVariant::Chrome => &["google-chrome", "google-chrome-stable", "chrome"],
+        BrowserVariant::Chromium => &["chromium", "chromium-browser"],
+        BrowserVariant::Brave => &["brave-browser", "brave"],
+        BrowserVariant::Edge => &["microsoft-edge", "microsoft-edge-stable"],
+        BrowserVariant::Vivaldi => &["vivaldi"],
+        BrowserVariant::ChromeForTesting => &["chrome", "google-chrome", "google-chrome-stable"],
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn command_in_path(command: &str) -> bool {
+    let Some(path) = std::env::var_os("PATH") else {
+        return false;
+    };
+
+    std::env::split_paths(&path).any(|dir| dir.join(command).exists())
 }
 
 // ── Platform: macOS ────────────────────────────────────────────────────

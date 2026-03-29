@@ -225,9 +225,9 @@ impl Wizard {
 
         let steps = [
             ("01", "DETECT BROWSERS", "Find all Chromium-based browsers on your system"),
-            ("02", "INSTALL BINARIES", "Copy the native messaging host and overlay companion"),
-            ("03", "REGISTER", "Write native messaging manifests so Chrome can find the host"),
-            ("04", "VERIFY", "Run diagnostics to confirm everything works"),
+            ("02", "INSTALL COMPANION", "Copy the overlay companion native host/daemon binary"),
+            ("03", "REGISTER", "Write native messaging manifests so Chrome can find the companion"),
+            ("04", "VERIFY", "Run diagnostics to confirm the JSON-RPC bridge works"),
         ];
 
         for (num, title, desc) in &steps {
@@ -276,8 +276,8 @@ impl Wizard {
             ui.label(
                 egui::RichText::new(
                     "No Chromium-based browsers detected. \
-                     The installer can still copy binaries, but native messaging \
-                     won't be registered until a browser is installed.",
+                     The installer can still copy the overlay companion, but \
+                     native messaging won't be registered until a browser is installed.",
                 )
                 .size(13.0)
                 .color(TERTIARY),
@@ -331,9 +331,9 @@ impl Wizard {
                 ui.label(
                     egui::RichText::new(
                         "Chrome extensions run in a sandbox and can't talk to your \
-                         desktop directly. A native messaging host is a small program \
-                         that Chrome launches to bridge this gap. We write a JSON \
-                         manifest file to tell each browser where to find it.",
+                         desktop directly. The overlay companion binary acts as a native \
+                         messaging host and durable daemon. We write a JSON manifest file \
+                         to tell each browser where to find it.",
                     )
                     .size(11.0)
                     .color(ON_SURFACE_VARIANT),
@@ -375,14 +375,18 @@ impl Wizard {
 
         if let Some(ref report) = self.install_report {
             let items: Vec<(&str, bool, &str)> = vec![
-                ("Native host binary", report.host_installed, "Copied to install directory"),
                 (
-                    "Overlay companion",
+                    "Overlay companion host",
+                    report.host_installed,
+                    "Copied to install directory",
+                ),
+                (
+                    "Overlay daemon foundation",
                     report.overlay_installed,
                     if report.overlay_installed {
-                        "Copied to install directory"
+                        "Ready for JSON-RPC bridge and platform-specific overlay support"
                     } else {
-                        "Not found (optional)"
+                        "Missing required overlay companion binary"
                     },
                 ),
                 ("Extension CRX", report.crx_installed, "Registered via external extension"),

@@ -92,97 +92,142 @@ This Chrome Extension allows you to interact with Gemini models in a sidebar, us
 
 - Node.js (v22+)
 - npm
-- Rust toolchain (for native components)
-- Linux: `libxkbcommon-dev libwayland-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libgl-dev libegl-dev` (for GUI installer)
+- Rust toolchain
+- Linux GUI installer dependencies: `libxkbcommon-dev libwayland-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libgl-dev libegl-dev`
 
-### Building Everything
+### Native companion platform support
+
+| Platform | Native bridge | Visible overlay window |
+|----------|---------------|------------------------|
+| Linux | Yes | No — bridge/daemon only |
+| macOS | Yes | Yes |
+| Windows | Yes | Yes |
+
+The extension talks to the Rust companion through a single native-messaging host:
+`com.llm_sidebar.native_overlay_companion`.
+
+### Development quickstart
 
 ```bash
-# 1. Chrome extension
+# Install JS dependencies once
 npm install
-npm run build          # → dist/
 
-# 2. Native messaging host + CLI installer
-cd native
-cargo build --release -p llm-sidebar-host
-cargo build --release -p llm-sidebar-installer
+# 1. Build the extension
+npm run build:extension
 
-# 3. Overlay companion (macOS/Windows only for the window; daemon works on Linux)
-cd native/overlay-companion
-cargo build --release
+# 2. Build the native companion + installer
+npm run build:native
+npm run build:installer
 
-# 4. GUI installer (with setup wizard UI)
-cd native
-cargo build --release -p llm-sidebar-installer --features gui
+# 3. Register native messaging for your local browser profile
+npm run native:install
+
+# 4. Verify the native bridge
+npm run native:diagnose
 ```
 
-### Running & Testing
-
-```bash
-# Run extension tests (312 tests)
-npm test
-
-# Run Rust tests
-cd native && cargo test
-
-# Type-check TypeScript
-npm run type-check
-
-# Run the installer CLI
-native/target/release/llm-sidebar-installer install      # Install everything
-native/target/release/llm-sidebar-installer uninstall    # Remove everything
-native/target/release/llm-sidebar-installer diagnose     # Check connection health
-
-# Run the GUI setup wizard (requires display server)
-native/target/release/llm-sidebar-installer gui
-
-# Run the overlay companion daemon
-native/overlay-companion/target/release/overlay-companion daemon
-
-# Run the native messaging host (Chrome launches this automatically)
-# Manual test: echo a native messaging frame to it
-echo -ne '\x0f\x00\x00\x00{"type":"ping"}' | native/target/release/llm-sidebar-host
-```
-
-### Loading the Extension in Chrome
+### Load the unpacked extension
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
-3. Click **Load unpacked** → select the `dist/` folder
-4. Open sidebar: click the extension icon or press `Ctrl+Shift+S`
+3. Click **Load unpacked**
+4. Select the repo `dist/` directory
+5. Open the sidebar by clicking the extension icon or pressing `Ctrl+Shift+S`
 
-### Installing Native Components
+If the native companion is installed correctly:
 
-After building, run the installer to register native messaging:
+- macOS / Windows should eventually show **Native OK**
+- Linux should show **Bridge Only** (the JSON-RPC bridge is connected, but the visible overlay window is intentionally unsupported today)
+
+### Native build and install commands
 
 ```bash
-# Option A: CLI installer (headless)
-native/target/release/llm-sidebar-installer install
+# Extension
+npm run build:extension
 
-# Option B: GUI setup wizard
-native/target/release/llm-sidebar-installer gui
+# Native companion host/daemon
+npm run build:native
 
-# Verify installation
-native/target/release/llm-sidebar-installer diagnose
+# Installer CLI
+npm run build:installer
+
+# Installer GUI (requires display server)
+npm run build:installer:gui
+
+# Install / uninstall / diagnose
+npm run native:install
+npm run native:diagnose
+native/target/release/llm-sidebar-installer uninstall
+
+# Optional: run the companion daemon directly
+native/overlay-companion/target/release/overlay-companion daemon
 ```
 
 The installer will:
-- Copy `llm-sidebar-host` and `overlay-companion` to `~/.local/share/llm-sidebar/` (Linux/macOS) or `%LOCALAPPDATA%\LLMSidebar\` (Windows)
-- Detect all installed Chromium browsers (Chrome, Chromium, Brave, Edge, Vivaldi)
-- Write native messaging host manifests for each browser
-- Register the CRX if found adjacent to the installer
 
-### Commands Reference
+- copy `overlay-companion` into `~/.local/share/llm-sidebar/` (Linux/macOS) or `%LOCALAPPDATA%\LLMSidebar\` (Windows)
+- detect installed Chromium-family browsers
+- write native messaging host manifests for each detected browser
+- optionally register a `.crx` if one is staged beside the installer
 
-| Command                         | Description                                     |
-| :------------------------------ | :---------------------------------------------- |
-| `npm run build`                 | Builds the extension to `dist/`                 |
-| `npm test`                      | Runs unit tests with Vitest (312 tests)         |
-| `npm run lint`                  | Runs ESLint                                     |
-| `npm run format`                | Formats code with Prettier                      |
-| `npm run type-check`            | Runs TypeScript type checking                   |
-| `npm run pack-crx`              | Packs extension as signed CRX3                  |
-| `npm run test:native-companion` | Runs the Puppeteer/native companion harness     |
+### End-to-end verification
+
+Run the installer-driven Puppeteer harness:
+
+```bash
+npm run test:native-companion
+```
+
+The harness:
+
+1. builds the extension
+2. builds `overlay-companion`
+3. builds `llm-sidebar-installer`
+4. stages the installer and companion into an isolated temp home
+5. runs the installer against that isolated browser profile
+6. loads the unpacked extension in Chrome
+7. verifies native connectivity + heartbeat
+8. verifies the browser memory path
+
+### Troubleshooting
+
+- **Sidebar says “No Native”**
+  - run `npm run native:diagnose`
+  - confirm the manifest exists under your browser's `NativeMessagingHosts` directory
+  - confirm you loaded the same extension ID/origin the installer registered
+
+- **Sidebar says “Bridge Only” on Linux**
+  - this is expected when native messaging is connected successfully
+  - Linux currently validates the bridge/daemon only, not a visible overlay window
+
+- **Installer reports no browsers detected**
+  - launch Chrome/Chromium once so its config directory exists
+  - rerun `npm run native:install`
+
+- **Using a different extension ID**
+  - the installer supports `--extension-id <id>`
+  - the dev harness derives its extension ID from `test-harness/native-companion/dev-extension-key.txt`
+
+- **Packaged CRX vs development**
+  - day-to-day development uses the unpacked extension from `dist/`
+  - packaged CRX/MSI/DMG/deb artifacts are for distribution
+
+### Commands reference
+
+| Command | Description |
+| :------ | :---------- |
+| `npm run build` | Builds the extension to `dist/` |
+| `npm run build:extension` | Alias for the extension build |
+| `npm run build:native` | Builds `overlay-companion` |
+| `npm run build:installer` | Builds `llm-sidebar-installer` |
+| `npm run build:installer:gui` | Builds the installer with GUI support |
+| `npm run native:install` | Runs the installer CLI |
+| `npm run native:diagnose` | Runs installer diagnostics against the installed companion |
+| `npm test` | Runs unit tests with Vitest |
+| `npm run type-check` | Runs TypeScript type checking |
+| `npm run lint` | Runs ESLint |
+| `npm run pack-crx` | Packs the extension as CRX3 |
+| `npm run test:native-companion` | Runs the installer-driven Puppeteer/native companion harness |
 
 ### Project Structure
 
@@ -192,14 +237,14 @@ The installer will:
 │   ├── scripts/           # Controllers, services, memory pipeline
 │   └── styles/            # sidebar.css (Kinetic Grid design system)
 ├── native/                 # Rust native components
-│   ├── host/              # Native messaging host (stdin/stdout bridge)
+│   ├── host/              # Legacy ping-only native host (not the primary integration path)
 │   ├── installer/         # CLI + GUI installer wizard
 │   │   └── src/
 │   │       ├── main.rs    # CLI entry: install, uninstall, diagnose, gui
 │   │       ├── browsers.rs # Multi-browser detection (Chrome/Brave/Edge/Vivaldi)
 │   │       ├── diagnose.rs # Connection health diagnostics
 │   │       └── gui.rs     # Egui setup wizard (--features gui)
-│   └── overlay-companion/ # Desktop overlay daemon (winit + softbuffer)
+│   └── overlay-companion/ # Native host + daemon + desktop overlay foundation
 ├── design-system/          # Kinetic Grid reference screens (HTML + PNG)
 ├── research/               # UI redesign planning document
 ├── test-harness/           # Puppeteer native companion test
@@ -210,8 +255,8 @@ The installer will:
 
 ```
 Chrome Extension
-    ↓ native messaging (stdin/stdout, JSON)
-llm-sidebar-host (native/host/)
+    ↓ native messaging (stdin/stdout, JSON-RPC)
+overlay-companion (native/overlay-companion/)
     ↓ JSON-RPC over local IPC socket
 overlay-companion daemon (native/overlay-companion/)
     → spawns always-on-top overlay window (macOS/Windows)
@@ -219,7 +264,7 @@ overlay-companion daemon (native/overlay-companion/)
 
 The native companion is designed around a durable daemon + native-messaging bridge split so the long-lived process can tolerate Chrome MV3 service-worker restarts and reconnect cleanly using JSON-RPC `hello`, `ping`, and `status` messages.
 
-The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, launches Chrome headless with the unpacked extension, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
+The harness builds the extension, builds the Rust binaries, runs the installer in an isolated browser home, launches Chrome headless with the unpacked extension, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
 
 | Artifact | Platform |
 |----------|----------|

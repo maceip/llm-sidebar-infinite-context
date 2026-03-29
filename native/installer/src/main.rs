@@ -19,7 +19,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub const HOST_NAME: &str = "com.llm_sidebar.native_host";
+pub const HOST_NAME: &str = "com.llm_sidebar.native_overlay_companion";
 pub const DEFAULT_EXTENSION_ID: &str = "hecgmgkofmopdcjlbaegcaanaadhomhb";
 
 fn main() {
@@ -88,14 +88,6 @@ pub fn install_dir() -> PathBuf {
     }
 }
 
-pub fn host_binary_name() -> &'static str {
-    if cfg!(windows) {
-        "llm-sidebar-host.exe"
-    } else {
-        "llm-sidebar-host"
-    }
-}
-
 pub fn overlay_binary_name() -> &'static str {
     if cfg!(windows) {
         "overlay-companion.exe"
@@ -142,25 +134,20 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
 
     let mut report = InstallReport::default();
 
-    // 1. Copy native host binary
-    let host_src = find_adjacent_binary(host_binary_name())
-        .ok_or("Cannot find llm-sidebar-host binary next to installer")?;
-    let host_dest = dest_dir.join(host_binary_name());
-    println!("  Copying native host to {}", host_dest.display());
-    fs::copy(&host_src, &host_dest)?;
+    // 1. Copy overlay companion host binary
+    let overlay_src = find_adjacent_binary(overlay_binary_name())
+        .ok_or("Cannot find overlay-companion binary next to installer")?;
+    let host_dest = dest_dir.join(overlay_binary_name());
+    println!(
+        "  Copying native companion host to {}",
+        host_dest.display()
+    );
+    fs::copy(&overlay_src, &host_dest)?;
     set_executable(&host_dest);
     report.host_installed = true;
+    report.overlay_installed = true;
 
-    // 2. Copy overlay companion if present
-    if let Some(overlay_src) = find_adjacent_binary(overlay_binary_name()) {
-        let overlay_dest = dest_dir.join(overlay_binary_name());
-        println!("  Copying overlay companion to {}", overlay_dest.display());
-        fs::copy(&overlay_src, &overlay_dest)?;
-        set_executable(&overlay_dest);
-        report.overlay_installed = true;
-    }
-
-    // 3. Detect browsers and register native messaging host for each
+    // 2. Detect browsers and register native messaging host for each
     let detected = browsers::detect_browsers();
     if detected.is_empty() {
         println!("  WARNING: No Chromium-based browsers detected.");
@@ -168,7 +155,7 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
 
     let manifest = serde_json::json!({
         "name": HOST_NAME,
-        "description": "Native messaging host for LLM Sidebar Chrome extension",
+        "description": "Native overlay companion host for LLM Sidebar Chrome extension",
         "path": host_dest.to_string_lossy(),
         "type": "stdio",
         "allowed_origins": [
@@ -190,7 +177,7 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
         }
     }
 
-    // 4. Install CRX if present
+    // 3. Install CRX if present
     if let Some(crx_path) = find_crx() {
         install_crx(&crx_path, extension_id, &dest_dir)?;
         report.crx_installed = true;

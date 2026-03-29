@@ -563,6 +563,10 @@ body {
   color: var(--warning, #f5a623);
 }
 
+.companion-dot.bridge-only {
+  color: var(--accent-primary, #5b8def);
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

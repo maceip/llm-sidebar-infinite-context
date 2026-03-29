@@ -169,6 +169,12 @@ export interface NativeCompanionStatusResponse {
   state: NativeCompanionState;
 }
 
+export interface NativeCompanionIndicatorModel {
+  label: string;
+  title: string;
+  dotClass: NativeCompanionConnectionState;
+}
+
 export interface JsonRpcRequest<TParams = Record<string, unknown> | undefined> {
   jsonrpc: '2.0';
   id: string;

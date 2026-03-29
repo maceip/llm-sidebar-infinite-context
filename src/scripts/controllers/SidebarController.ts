@@ -29,6 +29,7 @@ import {
   GetHistoryResponse,
   MemoryStatsResponse,
   ContextRetrievalSnapshot,
+  NativeCompanionState,
 } from '../types';
 import {
   createContextRibbon,
@@ -303,36 +304,71 @@ export class SidebarController {
   private async refreshCompanionStatus(): Promise<void> {
     try {
       const response = await this.messageService.sendMessage<{
-        state: { connectionState: string };
+        state: NativeCompanionState;
       }>({
         type: MessageTypes.NATIVE_COMPANION_STATUS,
       });
       if (response?.state) {
-        this.updateCompanionIndicator(response.state.connectionState);
+        this.updateCompanionIndicator(response.state);
       }
     } catch {
-      this.updateCompanionIndicator('disconnected');
+      this.updateCompanionIndicator({
+        connectionState: 'disconnected',
+        extensionSessionId: 'unknown',
+        reconnectAttempt: 0,
+        transport: 'native-messaging',
+        hostName: 'unknown',
+        diagnostics: [],
+        overlayStatus: 'starting',
+        serviceStatus: 'starting',
+        supportedFeatures: [],
+      });
     }
   }
 
-  private updateCompanionIndicator(state: string): void {
+  private updateCompanionIndicator(state: NativeCompanionState): void {
     if (!this.companionDot || !this.companionLabel || !this.companionPill) return;
 
-    // Remove all state classes
-    this.companionDot.classList.remove('connected', 'connecting', 'disconnected', 'degraded');
-    this.companionDot.classList.add(state === 'connected' ? 'connected' :
-      state === 'connecting' ? 'connecting' :
-      state === 'degraded' ? 'degraded' : 'disconnected');
+    const companionStateClass =
+      state.connectionState === 'connected'
+        ? state.overlayStatus === 'unsupported'
+          ? 'bridge-only'
+          : 'connected'
+        : state.connectionState === 'connecting'
+          ? 'connecting'
+          : state.connectionState === 'degraded'
+            ? 'degraded'
+            : 'disconnected';
 
-    const labels: Record<string, string> = {
-      connected: 'Native OK',
-      connecting: 'Connecting',
-      degraded: 'Degraded',
-      disconnected: 'No Native',
-      disabled: 'Disabled',
-    };
-    this.companionLabel.textContent = labels[state] || state;
-    this.companionPill.title = `Native companion: ${state}`;
+    // Remove all state classes
+    this.companionDot.classList.remove(
+      'connected',
+      'connecting',
+      'disconnected',
+      'degraded',
+      'bridge-only',
+    );
+    this.companionDot.classList.add(companionStateClass);
+
+    const label =
+      state.connectionState === 'connected'
+        ? state.overlayStatus === 'unsupported'
+          ? 'Bridge Only'
+          : 'Native OK'
+        : state.connectionState === 'connecting'
+          ? 'Connecting'
+          : state.connectionState === 'degraded'
+            ? 'Degraded'
+            : state.connectionState === 'disabled'
+              ? 'Disabled'
+              : 'No Native';
+
+    const overlaySummary =
+      state.overlayStatus === 'unsupported'
+        ? 'bridge connected; visible overlay unsupported on this platform'
+        : `overlay ${state.overlayStatus}`;
+    this.companionLabel.textContent = label;
+    this.companionPill.title = `Native companion: ${state.connectionState}; ${overlaySummary}; service ${state.serviceStatus}`;
   }
 
   private async loadHistory() {

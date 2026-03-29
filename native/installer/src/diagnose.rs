@@ -8,11 +8,11 @@
 ///   - Host binary responds to a test message
 ///   - Extension is registered (CRX or external extension JSON)
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-use crate::{browsers, install_dir, host_binary_name, overlay_binary_name, HOST_NAME};
+use crate::{browsers, install_dir, overlay_binary_name, DEFAULT_EXTENSION_ID, HOST_NAME};
 
 #[derive(Debug)]
 pub struct DiagnosticResult {
@@ -38,35 +38,35 @@ impl std::fmt::Display for DiagStatus {
     }
 }
 
-pub fn run_diagnostics(_extension_id: &str) -> String {
+pub fn run_diagnostics(extension_id: &str) -> String {
     let mut results = Vec::new();
     let dest_dir = install_dir();
 
     // 1. Check host binary
-    let host_path = dest_dir.join(host_binary_name());
+    let host_path = dest_dir.join(overlay_binary_name());
     if host_path.exists() {
         results.push(DiagnosticResult {
-            label: "Native host binary".into(),
+            label: "Native companion binary".into(),
             status: DiagStatus::Pass,
             detail: format!("Found at {}", host_path.display()),
         });
 
-        // Test if host responds
+        // Test if host responds to the JSON-RPC contract used by the extension
         match test_host_binary(&host_path) {
-            Ok(()) => results.push(DiagnosticResult {
-                label: "Native host responds".into(),
+            Ok(summary) => results.push(DiagnosticResult {
+                label: "Native JSON-RPC handshake".into(),
                 status: DiagStatus::Pass,
-                detail: "Host accepted a test message and replied".into(),
+                detail: summary,
             }),
             Err(e) => results.push(DiagnosticResult {
-                label: "Native host responds".into(),
+                label: "Native JSON-RPC handshake".into(),
                 status: DiagStatus::Fail,
-                detail: format!("Host failed to respond: {e}"),
+                detail: format!("Native companion failed JSON-RPC smoke test: {e}"),
             }),
         }
     } else {
         results.push(DiagnosticResult {
-            label: "Native host binary".into(),
+            label: "Native companion binary".into(),
             status: DiagStatus::Fail,
             detail: format!("Not found at {}", host_path.display()),
         });
@@ -101,7 +101,7 @@ pub fn run_diagnostics(_extension_id: &str) -> String {
     for browser in &browsers {
         let manifest_path = browser.native_messaging_dir.join(format!("{HOST_NAME}.json"));
         if manifest_path.exists() {
-            match validate_manifest(&manifest_path, &host_path) {
+            match validate_manifest(&manifest_path, &host_path, extension_id) {
                 Ok(()) => results.push(DiagnosticResult {
                     label: format!("{} manifest", browser.name),
                     status: DiagStatus::Pass,
@@ -128,7 +128,8 @@ pub fn run_diagnostics(_extension_id: &str) -> String {
 
 fn validate_manifest(
     manifest_path: &PathBuf,
-    _expected_host_path: &PathBuf,
+    expected_host_path: &PathBuf,
+    extension_id: &str,
 ) -> Result<(), String> {
     let content = fs::read_to_string(manifest_path).map_err(|e| format!("Cannot read: {e}"))?;
     let json: serde_json::Value =
@@ -145,6 +146,12 @@ fn validate_manifest(
     if !PathBuf::from(path).exists() {
         return Err(format!("Binary path does not exist: {path}"));
     }
+    if PathBuf::from(path) != *expected_host_path {
+        return Err(format!(
+            "Binary path mismatch: expected {}, got {path}",
+            expected_host_path.display()
+        ));
+    }
 
     // Check type is stdio
     let typ = json.get("type").and_then(|v| v.as_str()).unwrap_or("");
@@ -152,13 +159,76 @@ fn validate_manifest(
         return Err(format!("Type should be 'stdio', got '{typ}'"));
     }
 
+    let expected_origin = format!(
+        "chrome-extension://{}/",
+        if extension_id.is_empty() {
+            DEFAULT_EXTENSION_ID
+        } else {
+            extension_id
+        }
+    );
+    let allowed_origins = json
+        .get("allowed_origins")
+        .and_then(|value| value.as_array())
+        .ok_or_else(|| "allowed_origins must be an array".to_string())?;
+    if !allowed_origins.iter().any(|origin| origin.as_str() == Some(&expected_origin)) {
+        return Err(format!(
+            "allowed_origins missing expected extension origin {expected_origin}"
+        ));
+    }
+
     Ok(())
 }
 
-fn test_host_binary(host_path: &PathBuf) -> Result<(), String> {
-    // Send a minimal native messaging frame: 4-byte LE length + JSON
-    let msg = br#"{"type":"ping"}"#;
-    let len = (msg.len() as u32).to_le_bytes();
+fn native_frame(value: serde_json::Value) -> Result<Vec<u8>, String> {
+    let body = serde_json::to_vec(&value).map_err(|e| format!("Serialize frame: {e}"))?;
+    let mut frame = Vec::with_capacity(body.len() + 4);
+    frame.extend_from_slice(&(body.len() as u32).to_le_bytes());
+    frame.extend_from_slice(&body);
+    Ok(frame)
+}
+
+fn read_native_message(output: &[u8]) -> Result<serde_json::Value, String> {
+    if output.len() < 4 {
+        return Err("Native companion produced a truncated response".into());
+    }
+    let len = u32::from_le_bytes([output[0], output[1], output[2], output[3]]) as usize;
+    if output.len() < len + 4 {
+        return Err(format!(
+            "Native companion response length mismatch: header={len}, bytes={}",
+            output.len().saturating_sub(4)
+        ));
+    }
+    serde_json::from_slice(&output[4..4 + len]).map_err(|e| format!("Decode response JSON: {e}"))
+}
+
+fn test_host_binary(host_path: &PathBuf) -> Result<String, String> {
+    let hello_msg = native_frame(serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": "diagnose-hello",
+        "method": "hello",
+        "params": {
+            "extensionSessionId": "diagnose-extension-session",
+            "extensionVersion": "1.0.0",
+            "browser": "chrome",
+            "capabilities": ["json-rpc", "heartbeat", "overlay"],
+            "platform": std::env::consts::OS,
+        }
+    }))?;
+    let ping_msg = native_frame(serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": "diagnose-ping",
+        "method": "ping",
+        "params": {
+            "extensionSessionId": "diagnose-extension-session",
+            "sentAt": 1234567890_u64,
+        }
+    }))?;
+    let status_msg = native_frame(serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": "diagnose-status",
+        "method": "status"
+    }))?;
 
     let mut child = Command::new(host_path)
         .stdin(Stdio::piped())
@@ -168,8 +238,15 @@ fn test_host_binary(host_path: &PathBuf) -> Result<(), String> {
         .map_err(|e| format!("Cannot spawn host: {e}"))?;
 
     if let Some(ref mut stdin) = child.stdin {
-        stdin.write_all(&len).map_err(|e| format!("Write len: {e}"))?;
-        stdin.write_all(msg).map_err(|e| format!("Write msg: {e}"))?;
+        stdin
+            .write_all(&hello_msg)
+            .map_err(|e| format!("Write hello frame: {e}"))?;
+        stdin
+            .write_all(&ping_msg)
+            .map_err(|e| format!("Write ping frame: {e}"))?;
+        stdin
+            .write_all(&status_msg)
+            .map_err(|e| format!("Write status frame: {e}"))?;
     }
     // Drop stdin to signal EOF
     drop(child.stdin.take());
@@ -178,15 +255,93 @@ fn test_host_binary(host_path: &PathBuf) -> Result<(), String> {
         .wait_with_output()
         .map_err(|e| format!("Wait: {e}"))?;
 
-    // Host should produce some output (even if it's an error response)
-    if output.stdout.len() >= 4 {
-        Ok(())
-    } else if !output.stderr.is_empty() {
+    if !output.stderr.is_empty() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(format!("Host stderr: {}", stderr.trim()))
-    } else {
-        Err("Host produced no output".into())
+        if output.stdout.is_empty() {
+            return Err(format!("Host stderr: {}", stderr.trim()));
+        }
     }
+
+    let mut cursor = std::io::Cursor::new(&output.stdout);
+    let hello_response = read_frame_from_cursor(&mut cursor)?;
+    let ping_response = read_frame_from_cursor(&mut cursor)?;
+    let status_response = read_frame_from_cursor(&mut cursor)?;
+
+    validate_success_response(&hello_response, "diagnose-hello", "hello")?;
+    validate_success_response(&ping_response, "diagnose-ping", "ping")?;
+    validate_success_response(&status_response, "diagnose-status", "status")?;
+
+    let hello_result = hello_response
+        .get("result")
+        .and_then(|value| value.as_object())
+        .ok_or_else(|| "hello response missing result object".to_string())?;
+    let ping_result = ping_response
+        .get("result")
+        .and_then(|value| value.as_object())
+        .ok_or_else(|| "ping response missing result object".to_string())?;
+    let status_result = status_response
+        .get("result")
+        .and_then(|value| value.as_object())
+        .ok_or_else(|| "status response missing result object".to_string())?;
+
+    let overlay_status = hello_result
+        .get("overlayStatus")
+        .and_then(|value| value.as_str())
+        .unwrap_or("unknown");
+    let service_status = status_result
+        .get("service")
+        .and_then(|value| value.as_str())
+        .unwrap_or("unknown");
+    let platform = status_result
+        .get("platform")
+        .and_then(|value| value.as_str())
+        .unwrap_or("unknown");
+    let pong = ping_result
+        .get("pong")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+    if !pong {
+        return Err("ping response did not include pong=true".into());
+    }
+
+    Ok(format!(
+        "hello/status/ping succeeded; service={service_status}, overlay={overlay_status}, platform={platform}"
+    ))
+}
+
+fn read_frame_from_cursor(cursor: &mut std::io::Cursor<&Vec<u8>>) -> Result<serde_json::Value, String> {
+    let mut len_buf = [0u8; 4];
+    cursor
+        .read_exact(&mut len_buf)
+        .map_err(|e| format!("Read response length: {e}"))?;
+    let len = u32::from_le_bytes(len_buf) as usize;
+    let mut payload = vec![0u8; len];
+    cursor
+        .read_exact(&mut payload)
+        .map_err(|e| format!("Read response body: {e}"))?;
+    read_native_message(&[len_buf.to_vec(), payload].concat())
+}
+
+fn validate_success_response(
+    response: &serde_json::Value,
+    expected_id: &str,
+    label: &str,
+) -> Result<(), String> {
+    if response.get("jsonrpc").and_then(|value| value.as_str()) != Some("2.0") {
+        return Err(format!("{label} response missing jsonrpc=2.0: {response}"));
+    }
+    if response.get("id").and_then(|value| value.as_str()) != Some(expected_id) {
+        return Err(format!(
+            "{label} response ID mismatch: expected {expected_id}, got {response}"
+        ));
+    }
+    if response.get("error").is_some() {
+        return Err(format!("{label} returned RPC error: {response}"));
+    }
+    if response.get("result").is_none() {
+        return Err(format!("{label} response missing result: {response}"));
+    }
+    Ok(())
 }
 
 fn format_report(results: &[DiagnosticResult]) -> String {

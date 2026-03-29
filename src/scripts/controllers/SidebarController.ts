@@ -339,13 +339,25 @@ export class SidebarController {
   }
 
   private updateCompanionIndicator(state: string): void {
-    if (!this.companionDot || !this.companionLabel || !this.companionPill) return;
+    if (!this.companionDot || !this.companionLabel || !this.companionPill)
+      return;
 
     // Remove all state classes
-    this.companionDot.classList.remove('connected', 'connecting', 'disconnected', 'degraded');
-    this.companionDot.classList.add(state === 'connected' ? 'connected' :
-      state === 'connecting' ? 'connecting' :
-      state === 'degraded' ? 'degraded' : 'disconnected');
+    this.companionDot.classList.remove(
+      'connected',
+      'connecting',
+      'disconnected',
+      'degraded',
+    );
+    this.companionDot.classList.add(
+      state === 'connected'
+        ? 'connected'
+        : state === 'connecting'
+          ? 'connecting'
+          : state === 'degraded'
+            ? 'degraded'
+            : 'disconnected',
+    );
 
     const labels: Record<string, string> = {
       connected: 'Native OK',

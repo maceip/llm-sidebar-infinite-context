@@ -148,6 +148,12 @@ This stages a bundle in `dist-installer/` containing:
 - `llm-sidebar.crx`
 - `llm-sidebar-extension-id.txt`
 
+The installer will:
+- Copy `overlay-companion` to `~/.local/share/llm-sidebar/` (Linux/macOS) or `%LOCALAPPDATA%\LLMSidebar\` (Windows)
+- Detect all installed Chromium browsers (Chrome, Chromium, Brave, Edge, Vivaldi, Chrome for Testing)
+- Write native messaging host manifests for each browser
+- Register the CRX if found adjacent to the installer
+
 For production CRX packaging, provide `CRX_PRIVATE_KEY`. The default npm packaging path uses a reusable local development key.
 
 ### Commands Reference
@@ -158,7 +164,7 @@ For production CRX packaging, provide `CRX_PRIVATE_KEY`. The default npm packagi
 | `npm run build:native`          | Builds the Rust host, installer, and overlay companion |
 | `npm run build:package`         | Builds extension, native binaries, CRX, and staged installer assets |
 | `npm run installer:install`     | Builds package artifacts and runs the Rust installer |
-| `npm run installer:uninstall`   | Runs the Rust installer uninstall flow      |
+| `npm run installer:uninstall`   | Runs the Rust installer uninstall flow          |
 | `npm test`                      | Runs unit tests with Vitest                     |
 | `npm run lint`                  | Runs ESLint                                     |
 | `npm run format`                | Formats code with Prettier                      |
@@ -194,7 +200,18 @@ overlay-companion daemon
 
 The native companion is designed around a durable daemon + native-messaging bridge split so the long-lived process can tolerate Chrome MV3 service-worker restarts and reconnect cleanly using JSON-RPC `hello`, `ping`, and `status` messages.
 
-The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
+The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, launches Chrome headless with the unpacked extension, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
+
+| Artifact                         | Platform               |
+| -------------------------------- | ---------------------- |
+| `llm-sidebar.crx`                | All (Chrome extension) |
+| `llm-sidebar-extension.zip`      | All (Chrome Web Store) |
+| `llm-sidebar-linux-amd64.tar.gz` | Linux                  |
+| `llm-sidebar_1.0.0_amd64.deb`    | Linux (Debian/Ubuntu)  |
+| `llm-sidebar-macos-amd64.dmg`    | macOS Intel            |
+| `llm-sidebar-macos-arm64.dmg`    | macOS Apple Silicon    |
+| `llm-sidebar-windows-amd64.msi`  | Windows                |
+| `llm-sidebar-windows-amd64.zip`  | Windows                |
 
 ### Environment Variables
 

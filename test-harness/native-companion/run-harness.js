@@ -192,7 +192,6 @@ async function waitForCompanion(extensionId, browser) {
   );
 }
 
-
 function buildAgentMemoryFixture() {
   const now = Date.now();
   return {
@@ -210,7 +209,13 @@ function buildAgentMemoryFixture() {
             ownerTeamId: 'default-team',
             summary:
               'User prefers the browser memory harness to prove persistence and retrieval for the memory layer.',
-            keywords: ['browser', 'memory', 'persistence', 'retrieval', 'harness'],
+            keywords: [
+              'browser',
+              'memory',
+              'persistence',
+              'retrieval',
+              'harness',
+            ],
             createdAt: now,
             accessCount: 0,
             lastAccessedAt: now,
@@ -236,9 +241,12 @@ function buildAgentMemoryFixture() {
 
 async function runMemoryLayerScenario(extensionId, browser) {
   const page = await browser.newPage();
-  await page.goto(`chrome-extension://${extensionId}/src/pages/browser-memory-test.html`, {
-    waitUntil: 'networkidle0',
-  });
+  await page.goto(
+    `chrome-extension://${extensionId}/src/pages/browser-memory-test.html`,
+    {
+      waitUntil: 'networkidle0',
+    },
+  );
 
   const result = await page.evaluate(async (fixture) => {
     const AGENT_MEMORY_KEY = 'agentMemory';
@@ -279,7 +287,9 @@ async function runNativeConnectivityScenario(extensionId, browser) {
   const followUpStatus = await waitForCompanion(extensionId, browser);
 
   if (!followUpStatus.state.lastPongAt) {
-    throw new Error(`Expected heartbeat pong in native status: ${JSON.stringify(followUpStatus)}`);
+    throw new Error(
+      `Expected heartbeat pong in native status: ${JSON.stringify(followUpStatus)}`,
+    );
   }
 
   return { initialStatus, followUpStatus };
@@ -330,11 +340,7 @@ async function main() {
     );
     const memoryLayer = await runMemoryLayerScenario(extensionId, browser);
     console.log(
-      JSON.stringify(
-        { extensionId, nativeConnectivity, memoryLayer },
-        null,
-        2,
-      ),
+      JSON.stringify({ extensionId, nativeConnectivity, memoryLayer }, null, 2),
     );
   } finally {
     await browser.close();

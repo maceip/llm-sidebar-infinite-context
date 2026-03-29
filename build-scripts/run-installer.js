@@ -17,13 +17,29 @@ function resolveInstallerPath() {
   return path.join(bundleDir, installerBinaryName());
 }
 
+function runCommand(command, args, options = {}) {
+  if (process.platform === 'win32') {
+    const shellCommand = [command, ...args]
+      .map((part) =>
+        /[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part,
+      )
+      .join(' ');
+    return execFileSync('cmd.exe', ['/d', '/s', '/c', shellCommand], {
+      ...options,
+      shell: false,
+    });
+  }
+
+  return execFileSync(command, args, options);
+}
+
 function npmCommand() {
   return process.platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
 function ensureBundle() {
   if (!fs.existsSync(resolveInstallerPath())) {
-    execFileSync(npmCommand(), ['run', 'build:package'], {
+    runCommand(npmCommand(), ['run', 'build:package'], {
       cwd: projectRoot,
       stdio: 'inherit',
       env: process.env,
@@ -41,7 +57,7 @@ function main() {
       args.push('--extension-id', extensionId);
     }
   }
-  execFileSync(installerPath, args, {
+  runCommand(installerPath, args, {
     cwd: bundleDir,
     stdio: 'inherit',
     env: process.env,

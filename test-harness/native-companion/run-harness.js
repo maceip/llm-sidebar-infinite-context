@@ -16,6 +16,22 @@ const key = fs
   .readFileSync(path.join(harnessRoot, 'dev-extension-key.txt'), 'utf8')
   .trim();
 
+function runCommand(command, args, options = {}) {
+  if (process.platform === 'win32') {
+    const shellCommand = [command, ...args]
+      .map((part) =>
+        /[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part,
+      )
+      .join(' ');
+    return execFileSync('cmd.exe', ['/d', '/s', '/c', shellCommand], {
+      ...options,
+      shell: false,
+    });
+  }
+
+  return execFileSync(command, args, options);
+}
+
 function resolveCommand(baseName) {
   if (process.platform === 'win32') {
     if (baseName === 'npm') {
@@ -53,7 +69,7 @@ function deriveExtensionId(publicKey) {
 }
 
 async function buildExtension() {
-  execFileSync(resolveCommand('npm'), ['run', 'build'], {
+  runCommand(resolveCommand('npm'), ['run', 'build'], {
     cwd: workspaceRoot,
     stdio: 'inherit',
     env: {
@@ -66,7 +82,7 @@ async function buildExtension() {
 }
 
 async function buildNativeBinary() {
-  execFileSync(
+  runCommand(
     resolveCommand('cargo'),
     [
       '+stable',
@@ -275,7 +291,7 @@ async function main() {
   await buildNativeBinary();
   const { nativeBinary } = await prepareExtension(extensionId);
 
-  execFileSync(nativeBinary, ['install-assets'], {
+  runCommand(nativeBinary, ['install-assets'], {
     cwd: workspaceRoot,
     stdio: 'inherit',
     env: {

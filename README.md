@@ -219,9 +219,7 @@ overlay-companion daemon (native/overlay-companion/)
 
 The native companion is designed around a durable daemon + native-messaging bridge split so the long-lived process can tolerate Chrome MV3 service-worker restarts and reconnect cleanly using JSON-RPC `hello`, `ping`, and `status` messages.
 
-### CI/CD Release Artifacts
-
-On `v*` tag push, CI produces:
+The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, launches Chrome headless with the unpacked extension, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
 
 | Artifact | Platform |
 |----------|----------|

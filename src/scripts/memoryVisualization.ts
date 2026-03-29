@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  ContextRetrievalSnapshot,
-  RetrievalSnapshotEpisode,
-} from './types';
+import { ContextRetrievalSnapshot, RetrievalSnapshotEpisode } from './types';
 
 // --- Color palette matching sidebar.css design tokens ---
 const COLORS = {
@@ -113,10 +110,6 @@ export class MemoryVisualization {
     this.canvas.height = canvasH * this.dpr;
     this.ctx.scale(this.dpr, this.dpr);
 
-    const activeIds = new Set(
-      this.snapshot.retrievedEpisodes.map((e) => e.id),
-    );
-
     // Build block grid from total episode count
     const totalCount = Math.max(this.snapshot.totalEpisodeCount, 1);
     const cols = Math.min(totalCount, Math.floor((canvasW - 80) / 14));
@@ -124,7 +117,6 @@ export class MemoryVisualization {
     const blockW = 10;
     const blockH = 10;
     const gap = 3;
-    const gridW = cols * (blockW + gap) - gap;
     const offsetX = 8;
     const offsetY = Math.max(8, (canvasH - rows * (blockH + gap)) / 2);
 
@@ -182,8 +174,7 @@ export class MemoryVisualization {
     for (const block of this.blocks) {
       // Ease glow toward target with staggered timing
       const speed = block.isActive ? 0.08 : 0.04;
-      block.glowIntensity +=
-        (block.targetGlow - block.glowIntensity) * speed;
+      block.glowIntensity += (block.targetGlow - block.glowIntensity) * speed;
 
       // Active blocks pulse gently
       if (block.isActive && frame > 30) {
@@ -242,9 +233,7 @@ export class MemoryVisualization {
     // Block fill
     if (isActive) {
       const baseColor =
-        episode?.kind === 'summary'
-          ? COLORS.summaryActive
-          : COLORS.turnActive;
+        episode?.kind === 'summary' ? COLORS.summaryActive : COLORS.turnActive;
       this.ctx.globalAlpha = 0.3 + glowIntensity * 0.7;
       this.ctx.fillStyle = baseColor;
     } else {
@@ -262,7 +251,7 @@ export class MemoryVisualization {
     this.ctx.globalAlpha = 1;
   }
 
-  private drawBudgetArc(canvasW: number, canvasH: number): void {
+  private drawBudgetArc(canvasW: number, _canvasH: number): void {
     if (!this.snapshot) return;
 
     const centerX = canvasW - 36;

@@ -598,7 +598,7 @@ fn ensure_daemon_running(paths: &AppPaths) -> Result<()> {
 fn run_host() -> Result<()> {
     let paths = AppPaths::discover()?;
     let extension_id = env::var("OVERLAY_EXTENSION_ID")
-        .unwrap_or_else(|_| "nnhnfinhcolokbaecbidapfdkbibfoca".to_string());
+        .unwrap_or_else(|_| "hecgmgkofmopdcjlbaegcaanaadhomhb".to_string());
     ensure_assets(&paths, &extension_id)?;
     ensure_daemon_running(&paths)?;
 
@@ -626,7 +626,7 @@ fn run_host() -> Result<()> {
 fn run_daemon() -> Result<()> {
     let paths = AppPaths::discover()?;
     let extension_id = env::var("OVERLAY_EXTENSION_ID")
-        .unwrap_or_else(|_| "nnhnfinhcolokbaecbidapfdkbibfoca".to_string());
+        .unwrap_or_else(|_| "hecgmgkofmopdcjlbaegcaanaadhomhb".to_string());
     ensure_assets(&paths, &extension_id)?;
 
     let mut state = load_state(&paths)?;
@@ -686,7 +686,7 @@ fn handle_daemon_connection(
 fn install_assets() -> Result<()> {
     let paths = AppPaths::discover()?;
     let extension_id = env::var("OVERLAY_EXTENSION_ID")
-        .unwrap_or_else(|_| "nnhnfinhcolokbaecbidapfdkbibfoca".to_string());
+        .unwrap_or_else(|_| "hecgmgkofmopdcjlbaegcaanaadhomhb".to_string());
     ensure_assets(&paths, &extension_id)?;
     for manifest_path in &paths.native_host_manifest_paths {
         println!("native host manifest: {}", manifest_path.display());

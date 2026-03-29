@@ -12,9 +12,11 @@ const extensionRoot = path.join(tempRoot, 'extension');
 const userDataDir = path.join(tempRoot, 'chrome-data');
 const tempHome = path.join(tempRoot, 'home');
 const configHome = path.join(tempHome, '.config');
+const stagingDir = path.join(tempRoot, 'installer-staging');
 const key = fs
   .readFileSync(path.join(harnessRoot, 'dev-extension-key.txt'), 'utf8')
   .trim();
+const HOST_NAME = 'com.maceip.native_overlay_companion';
 
 function runCommand(command, args, options = {}) {
   if (process.platform === 'win32') {
@@ -52,6 +54,29 @@ function resolveNativeBinaryPath() {
   return path.join(
     workspaceRoot,
     'native/overlay-companion/target/debug',
+    `overlay-companion${extension}`,
+  );
+}
+
+function resolveInstallerBinaryPath() {
+  const extension = process.platform === 'win32' ? '.exe' : '';
+  return path.join(
+    workspaceRoot,
+    'native/target/debug',
+    `llm-sidebar-installer${extension}`,
+  );
+}
+
+function resolveInstalledNativeBinaryPath() {
+  const extension = process.platform === 'win32' ? '.exe' : '';
+  if (process.platform === 'win32') {
+    return path.join(tempHome, 'AppData', 'Local', 'LLMSidebar', `overlay-companion${extension}`);
+  }
+  return path.join(
+    tempHome,
+    '.local',
+    'share',
+    'llm-sidebar',
     `overlay-companion${extension}`,
   );
 }
@@ -98,7 +123,24 @@ async function buildNativeBinary() {
   );
 }
 
-async function prepareExtension(extensionId) {
+async function buildInstallerBinary() {
+  execFileSync(
+    resolveCommand('cargo'),
+    [
+      '+stable',
+      'build',
+      '--manifest-path',
+      path.join(workspaceRoot, 'native/installer/Cargo.toml'),
+    ],
+    {
+      cwd: workspaceRoot,
+      stdio: 'inherit',
+      env: process.env,
+    },
+  );
+}
+
+async function prepareExtension(_extensionId) {
   await fse.remove(tempRoot);
   await fse.ensureDir(tempRoot);
   await fse.copy(path.join(workspaceRoot, 'dist'), extensionRoot);
@@ -117,30 +159,121 @@ async function prepareExtension(extensionId) {
     path.join(workspaceRoot, 'src/pages/native-companion-test.html'),
     nativePagePath,
   );
+}
 
-  const hostDirs = [
+async function stageInstallerArtifacts() {
+  await fse.ensureDir(stagingDir);
+  const installerBinary = resolveInstallerBinaryPath();
+  const nativeBinary = resolveNativeBinaryPath();
+  const stagedInstaller = path.join(stagingDir, path.basename(installerBinary));
+  const stagedCompanion = path.join(stagingDir, path.basename(nativeBinary));
+  await fse.copy(installerBinary, stagedInstaller);
+  await fse.copy(nativeBinary, stagedCompanion);
+  if (process.platform !== 'win32') {
+    await fse.chmod(stagedInstaller, 0o755);
+    await fse.chmod(stagedCompanion, 0o755);
+  }
+  return { stagedInstaller, stagedCompanion };
+}
+
+function harnessEnv(extensionId) {
+  const env = {
+    ...process.env,
+    HOME: tempHome,
+    XDG_CONFIG_HOME: configHome,
+    OVERLAY_EXTENSION_ID: extensionId,
+  };
+  if (process.platform === 'win32') {
+    env.USERPROFILE = tempHome;
+    env.LOCALAPPDATA = path.join(tempHome, 'AppData', 'Local');
+  }
+  return env;
+}
+
+async function runInstaller(extensionId) {
+  const { stagedInstaller } = await stageInstallerArtifacts();
+  execFileSync(stagedInstaller, ['install', '--extension-id', extensionId], {
+    cwd: stagingDir,
+    stdio: 'inherit',
+    env: harnessEnv(extensionId),
+  });
+  return { stagedInstaller };
+}
+
+async function verifyInstallerArtifacts(extensionId) {
+  const installedBinary = resolveInstalledNativeBinaryPath();
+  if (!fs.existsSync(installedBinary)) {
+    throw new Error(`Installer did not copy overlay companion to ${installedBinary}`);
+  }
+
+  const manifestDirs = [
     path.join(configHome, 'google-chrome-for-testing', 'NativeMessagingHosts'),
     path.join(configHome, 'google-chrome', 'NativeMessagingHosts'),
     path.join(configHome, 'chromium', 'NativeMessagingHosts'),
-    path.join(userDataDir, 'NativeMessagingHosts'),
   ];
-  const nativeBinary = resolveNativeBinaryPath();
-  const hostManifest = {
-    name: 'com.maceip.native_overlay_companion',
-    description: 'Native overlay companion test harness host',
-    path: nativeBinary,
-    type: 'stdio',
-    allowed_origins: [`chrome-extension://${extensionId}/`],
-  };
-  for (const hostDir of hostDirs) {
-    await fse.ensureDir(hostDir);
-    fs.writeFileSync(
-      path.join(hostDir, 'com.maceip.native_overlay_companion.json'),
-      JSON.stringify(hostManifest, null, 2),
+
+  const manifestChecks = [];
+  for (const dir of manifestDirs) {
+    const manifestPath = path.join(dir, `${HOST_NAME}.json`);
+    manifestChecks.push({
+      manifestPath,
+      exists: fs.existsSync(manifestPath),
+      content: fs.existsSync(manifestPath)
+        ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+        : null,
+    });
+  }
+
+  if (!manifestChecks.some((item) => item.exists)) {
+    throw new Error(
+      `Installer did not create any native messaging manifests: ${JSON.stringify(manifestChecks, null, 2)}`,
     );
   }
 
-  return { nativeBinary, hostDirs };
+  for (const item of manifestChecks.filter((entry) => entry.exists)) {
+    if (item.content.name !== HOST_NAME) {
+      throw new Error(`Manifest name mismatch in ${item.manifestPath}: ${item.content.name}`);
+    }
+    if (item.content.path !== installedBinary) {
+      throw new Error(
+        `Manifest path mismatch in ${item.manifestPath}: expected ${installedBinary}, got ${item.content.path}`,
+      );
+    }
+    if (
+      !Array.isArray(item.content.allowed_origins) ||
+      !item.content.allowed_origins.includes(`chrome-extension://${extensionId}/`)
+    ) {
+      throw new Error(
+        `Manifest allowed_origins mismatch in ${item.manifestPath}: ${JSON.stringify(item.content.allowed_origins)}`,
+      );
+    }
+  }
+
+  return {
+    installedBinary,
+    manifestChecks,
+  };
+}
+
+async function mirrorManifestIntoUserDataDir(installerArtifacts) {
+  const sourceManifest = installerArtifacts.manifestChecks.find(
+    (item) => item.exists,
+  );
+  if (!sourceManifest) {
+    throw new Error('No installer-generated manifest available to mirror');
+  }
+
+  const profileNativeMessagingDir = path.join(userDataDir, 'NativeMessagingHosts');
+  await fse.ensureDir(profileNativeMessagingDir);
+  const destinationManifest = path.join(
+    profileNativeMessagingDir,
+    `${HOST_NAME}.json`,
+  );
+  await fse.copy(sourceManifest.manifestPath, destinationManifest);
+
+  return {
+    destinationManifest,
+  };
 }
 
 async function waitForCompanion(extensionId, browser) {
@@ -190,6 +323,32 @@ async function waitForCompanion(extensionId, browser) {
   throw new Error(
     `Timed out waiting for native companion connection; last status=${lastStatusText}`,
   );
+}
+
+async function readSidebarIndicator(extensionId, browser) {
+  const page = await browser.newPage();
+  await page.goto(`chrome-extension://${extensionId}/src/pages/sidebar.html`, {
+    waitUntil: 'networkidle0',
+  });
+
+  await page.waitForFunction(() => {
+    const label = document.getElementById('companion-label');
+    return Boolean(label?.textContent && label.textContent !== 'Companion');
+  });
+
+  const indicator = await page.evaluate(() => {
+    const label = document.getElementById('companion-label');
+    const pill = document.getElementById('status-companion');
+    const dot = document.getElementById('companion-dot');
+    return {
+      label: label?.textContent || '',
+      title: pill?.getAttribute('title') || '',
+      dotClasses: dot?.className || '',
+    };
+  });
+
+  await page.close();
+  return indicator;
 }
 
 function buildAgentMemoryFixture() {
@@ -299,30 +458,19 @@ async function main() {
   const extensionId = deriveExtensionId(key);
   await buildExtension();
   await buildNativeBinary();
-  const { nativeBinary } = await prepareExtension(extensionId);
-
-  runCommand(nativeBinary, ['install-assets'], {
-    cwd: workspaceRoot,
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      HOME: tempHome,
-      XDG_CONFIG_HOME: configHome,
-      OVERLAY_EXTENSION_ID: extensionId,
-    },
-  });
+  await buildInstallerBinary();
+  await prepareExtension(extensionId);
+  await runInstaller(extensionId);
+  const installerArtifacts = await verifyInstallerArtifacts(extensionId);
+  const mirroredProfileManifest =
+    await mirrorManifestIntoUserDataDir(installerArtifacts);
 
   const browser = await puppeteer.launch({
     headless: 'new',
     pipe: true,
     enableExtensions: [extensionRoot],
     userDataDir,
-    env: {
-      ...process.env,
-      HOME: tempHome,
-      XDG_CONFIG_HOME: configHome,
-      OVERLAY_EXTENSION_ID: extensionId,
-    },
+    env: harnessEnv(extensionId),
   });
 
   try {
@@ -339,8 +487,20 @@ async function main() {
       browser,
     );
     const memoryLayer = await runMemoryLayerScenario(extensionId, browser);
+    const sidebarIndicator = await readSidebarIndicator(extensionId, browser);
     console.log(
-      JSON.stringify({ extensionId, nativeConnectivity, memoryLayer }, null, 2),
+      JSON.stringify(
+        {
+          extensionId,
+          installerArtifacts,
+          mirroredProfileManifest,
+          nativeConnectivity,
+          memoryLayer,
+          sidebarIndicator,
+        },
+        null,
+        2,
+      ),
     );
   } finally {
     await browser.close();

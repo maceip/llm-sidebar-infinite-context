@@ -6,13 +6,6 @@
   "scripts": {
     "test": "vitest run",
     "build": "node build-scripts/build.js",
-    "type-check": "tsc",
-    "test:native-companion": "node test-harness/native-companion/run-harness.js",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint .",
-    "pack-crx": "node build-scripts/pack-crx.js",
-    "prepare": "husky",
     "build:extension": "node build-scripts/build.js",
     "build:native:host": "cargo +stable build --manifest-path native/host/Cargo.toml",
     "build:native:installer": "cargo +stable build --manifest-path native/installer/Cargo.toml",
@@ -22,7 +15,14 @@
     "installer:prepare": "npm run build:package",
     "installer:install": "npm run build:package && node build-scripts/run-installer.js install",
     "installer:uninstall": "node build-scripts/run-installer.js uninstall",
-    "pack-crx:dev": "node build-scripts/pack-crx.js --generate-key"
+    "type-check": "tsc",
+    "test:native-companion": "node test-harness/native-companion/run-harness.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "pack-crx": "node build-scripts/pack-crx.js",
+    "pack-crx:dev": "node build-scripts/pack-crx.js --generate-key",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",

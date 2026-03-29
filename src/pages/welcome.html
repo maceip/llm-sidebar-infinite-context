@@ -50,9 +50,8 @@
           </div>
           <h1>Welcome!</h1>
           <p>
-            Your sidebar assistant is ready, and the native overlay companion
-            foundation is now included for resilient browser-to-native
-            connectivity.
+            Your sidebar assistant is ready. This build can also talk to a Rust
+            native companion when you install the overlay companion bridge.
           </p>
         </div>
 
@@ -106,13 +105,12 @@
           <div class="welcome-step">
             <div class="welcome-step-number">4</div>
             <div class="welcome-step-content">
-              <h3>Understand the overlay companion</h3>
+              <h3>Install the native companion (optional)</h3>
               <p>
-                This build also includes a Rust native companion foundation that
-                keeps a durable link to the extension through native messaging.
-                The visible HUD/overlay target is macOS and Windows; on Linux,
-                the current work validates connectivity and heartbeat behavior
-                rather than drawing a live overlay.
+                If you want browser-to-desktop integration, build and run the
+                Rust installer from the repo root. The native bridge works on
+                Linux, macOS, and Windows; the visible overlay window is
+                currently for macOS and Windows only.
               </p>
             </div>
           </div>
@@ -295,9 +293,7 @@
               </svg>
             </div>
             <h4>Overlay Foundation</h4>
-            <p>
-              Documents the native HUD direction for macOS and Windows builds
-            </p>
+            <p>Installs a native bridge today, with visible overlay support targeted for macOS and Windows</p>
           </div>
         </div>
 
@@ -329,10 +325,11 @@
               color: var(--text-secondary);
             "
           >
-            The extension now has a native-messaging bridge to a Rust companion
-            service with reconnect and heartbeat support. That foundation is
-            meant to make the extension survive Chrome runtime churn more
-            gracefully.
+            The extension can connect to a Rust native companion service with
+            reconnect and heartbeat support after you build the native binaries
+            and run the installer. The sidebar status pill will then show
+            whether the bridge is connected and whether overlay rendering is
+            available on your platform.
           </p>
           <ul
             style="
@@ -345,12 +342,13 @@
           >
             <li>Visible HUD / overlay target: macOS and Windows.</li>
             <li>
-              Linux currently validates extension-to-native connectivity, not a
+              Linux currently supports the native bridge and diagnostics, not a
               visible overlay window.
             </li>
             <li>
-              The bundled test harness proves browser memory and native
-              heartbeat behavior in headless Chrome.
+              The bundled Puppeteer harness installs the native companion in an
+              isolated profile and proves browser memory plus heartbeat
+              behavior in headless Chrome.
             </li>
           </ul>
         </div>
@@ -383,8 +381,8 @@
         <!-- CTA -->
         <div style="text-align: center; margin-top: 24px; padding-bottom: 32px">
           <p style="font-size: 13px; color: var(--text-muted); margin: 0">
-            Open the sidebar to start chatting, and treat the native overlay
-            companion as an advanced foundation that will grow from here.
+            Open the sidebar to start chatting. If you want the native bridge,
+            follow the repo's build + installer instructions first.
           </p>
         </div>
       </div>

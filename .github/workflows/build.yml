@@ -96,10 +96,6 @@ jobs:
             native/overlay-companion/target
           key: ${{ matrix.target }}-cargo-${{ hashFiles('native/**/Cargo.lock') }}
 
-      - name: Build native host
-        working-directory: native
-        run: cargo build --release --target ${{ matrix.target }} -p llm-sidebar-host
-
       - name: Build installer (CLI)
         working-directory: native
         run: cargo build --release --target ${{ matrix.target }} -p llm-sidebar-installer
@@ -123,7 +119,6 @@ jobs:
         continue-on-error: true
 
       - name: Build overlay companion
-        if: runner.os != 'Linux'
         working-directory: native/overlay-companion
         run: cargo build --release --target ${{ matrix.target }}
         continue-on-error: true
@@ -131,12 +126,13 @@ jobs:
       - name: Stage artifacts (unix)
         if: runner.os != 'Windows'
         run: |
-          cp native/target/${{ matrix.target }}/release/llm-sidebar-host staging/
-          # GUI installer (if built successfully, overwrote the binary)
+          mkdir -p staging
           if [ -f native/target/${{ matrix.target }}/release/llm-sidebar-installer ]; then
             cp native/target/${{ matrix.target }}/release/llm-sidebar-installer staging/
           fi
-          # Overlay companion
+          if [ -f native/target/${{ matrix.target }}/release/llm-sidebar-installer-cli ]; then
+            cp native/target/${{ matrix.target }}/release/llm-sidebar-installer-cli staging/
+          fi
           if [ -f native/overlay-companion/target/${{ matrix.target }}/release/overlay-companion ]; then
             cp native/overlay-companion/target/${{ matrix.target }}/release/overlay-companion staging/
           fi
@@ -145,9 +141,12 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp native/target/${{ matrix.target }}/release/llm-sidebar-host.exe staging/
+          mkdir -p staging
           if [ -f native/target/${{ matrix.target }}/release/llm-sidebar-installer.exe ]; then
             cp native/target/${{ matrix.target }}/release/llm-sidebar-installer.exe staging/
+          fi
+          if [ -f native/target/${{ matrix.target }}/release/llm-sidebar-installer-cli.exe ]; then
+            cp native/target/${{ matrix.target }}/release/llm-sidebar-installer-cli.exe staging/
           fi
           if [ -f native/overlay-companion/target/${{ matrix.target }}/release/overlay-companion.exe ]; then
             cp native/overlay-companion/target/${{ matrix.target }}/release/overlay-companion.exe staging/
@@ -186,14 +185,13 @@ jobs:
           mkdir -p $ROOT/usr/lib/$PKG
           mkdir -p $ROOT/usr/bin
 
-          cp native-bin/llm-sidebar-host $ROOT/usr/lib/$PKG/
-          # Use the CLI installer for the deb
+          cp native-bin/overlay-companion $ROOT/usr/lib/$PKG/
           if [ -f native-bin/llm-sidebar-installer-cli ]; then
             cp native-bin/llm-sidebar-installer-cli $ROOT/usr/bin/llm-sidebar-installer
           else
             cp native-bin/llm-sidebar-installer $ROOT/usr/bin/llm-sidebar-installer
           fi
-          chmod 755 $ROOT/usr/lib/$PKG/llm-sidebar-host
+          chmod 755 $ROOT/usr/lib/$PKG/overlay-companion
           chmod 755 $ROOT/usr/bin/llm-sidebar-installer
 
           cp ext/dist/llm-sidebar.crx $ROOT/usr/lib/$PKG/ 2>/dev/null || true
@@ -214,11 +212,11 @@ jobs:
           set -e
           MANIFEST_DIR=/etc/opt/chrome/native-messaging-hosts
           mkdir -p "$MANIFEST_DIR"
-          cat > "$MANIFEST_DIR/com.llm_sidebar.native_host.json" << MANIFEST
+          cat > "$MANIFEST_DIR/com.maceip.native_overlay_companion.json" << MANIFEST
           {
-            "name": "com.llm_sidebar.native_host",
-            "description": "Native messaging host for LLM Sidebar",
-            "path": "/usr/lib/llm-sidebar/llm-sidebar-host",
+            "name": "com.maceip.native_overlay_companion",
+            "description": "Native overlay companion for LLM Sidebar",
+            "path": "/usr/lib/llm-sidebar/overlay-companion",
             "type": "stdio",
             "allowed_origins": [
               "chrome-extension://hecgmgkofmopdcjlbaegcaanaadhomhb/"
@@ -232,7 +230,7 @@ jobs:
           cat > $ROOT/DEBIAN/postrm << 'REM'
           #!/bin/sh
           set -e
-          rm -f /etc/opt/chrome/native-messaging-hosts/com.llm_sidebar.native_host.json
+          rm -f /etc/opt/chrome/native-messaging-hosts/com.maceip.native_overlay_companion.json
           REM
           sed -i 's/^          //' $ROOT/DEBIAN/postrm
           chmod 755 $ROOT/DEBIAN/postrm
@@ -277,16 +275,14 @@ jobs:
 
           mkdir -p "$DMG_DIR/$APP"
 
-          cp native-bin/llm-sidebar-host "$DMG_DIR/$APP/"
-          # Include both CLI and GUI installers if available
+          cp native-bin/overlay-companion "$DMG_DIR/$APP/"
           test -f native-bin/llm-sidebar-installer-cli && cp native-bin/llm-sidebar-installer-cli "$DMG_DIR/$APP/" || true
           test -f native-bin/llm-sidebar-installer && cp native-bin/llm-sidebar-installer "$DMG_DIR/$APP/" || true
-          test -f native-bin/overlay-companion && cp native-bin/overlay-companion "$DMG_DIR/$APP/" || true
 
           cp ext/dist/llm-sidebar.crx "$DMG_DIR/$APP/" 2>/dev/null || true
 
           chmod +x "$DMG_DIR/$APP/"llm-sidebar-*
-          test -f "$DMG_DIR/$APP/overlay-companion" && chmod +x "$DMG_DIR/$APP/overlay-companion" || true
+          chmod +x "$DMG_DIR/$APP/overlay-companion"
 
           cat > "$DMG_DIR/$APP/install.command" << 'SCRIPT'
           #!/bin/bash
@@ -341,14 +337,12 @@ jobs:
         shell: bash
         run: |
           mkdir -p wix-staging
-          cp native-bin/llm-sidebar-host.exe wix-staging/
-          # Use CLI installer for MSI
+          cp native-bin/overlay-companion.exe wix-staging/
           if [ -f native-bin/llm-sidebar-installer-cli.exe ]; then
             cp native-bin/llm-sidebar-installer-cli.exe wix-staging/llm-sidebar-installer.exe
           else
             cp native-bin/llm-sidebar-installer.exe wix-staging/
           fi
-          test -f native-bin/overlay-companion.exe && cp native-bin/overlay-companion.exe wix-staging/ || true
           cp ext/dist/llm-sidebar.crx wix-staging/ 2>/dev/null || true
 
           cat > wix-staging/Package.wxs << 'WXS'
@@ -364,11 +358,11 @@ jobs:
               <StandardDirectory Id="LocalAppDataFolder">
                 <Directory Id="INSTALLFOLDER" Name="LLMSidebar">
                   <Component Id="MainComponents" Guid="*">
-                    <File Id="NativeHost" Source="llm-sidebar-host.exe" KeyPath="yes" />
+                    <File Id="NativeHost" Source="overlay-companion.exe" KeyPath="yes" />
                     <File Id="Installer" Source="llm-sidebar-installer.exe" />
                     <RegistryKey Root="HKCU"
-                                 Key="Software\Google\Chrome\NativeMessagingHosts\com.llm_sidebar.native_host">
-                      <RegistryValue Type="string" Value="[INSTALLFOLDER]com.llm_sidebar.native_host.json" />
+                                 Key="Software\Google\Chrome\NativeMessagingHosts\com.maceip.native_overlay_companion">
+                      <RegistryValue Type="string" Value="[INSTALLFOLDER]com.maceip.native_overlay_companion.json" />
                     </RegistryKey>
                   </Component>
                 </Directory>

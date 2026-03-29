@@ -140,10 +140,11 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
     let host_src = find_adjacent_binary(host_binary_name())
         .ok_or("Cannot find overlay-companion binary next to installer")?;
     let host_dest = dest_dir.join(host_binary_name());
-    println!("  Copying native host to {}", host_dest.display());
+    println!("  Copying native companion host to {}", host_dest.display());
     fs::copy(&host_src, &host_dest)?;
     set_executable(&host_dest);
     report.host_installed = true;
+    report.overlay_installed = true;
 
     if let Some(overlay_src) = find_adjacent_binary(overlay_binary_name()) {
         let overlay_dest = dest_dir.join(overlay_binary_name());
@@ -155,6 +156,7 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
         report.overlay_installed = true;
     }
 
+    // 2. Detect browsers and register native messaging host for each
     let detected = browsers::detect_browsers();
     if detected.is_empty() {
         println!("  WARNING: No Chromium-based browsers detected.");
@@ -162,7 +164,7 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
 
     let manifest = serde_json::json!({
         "name": HOST_NAME,
-        "description": "Native messaging host for LLM Sidebar Chrome extension",
+        "description": "Native overlay companion host for LLM Sidebar Chrome extension",
         "path": host_dest.to_string_lossy(),
         "type": "stdio",
         "allowed_origins": [format!("chrome-extension://{extension_id}/")]
@@ -182,6 +184,7 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
         }
     }
 
+    // 3. Install CRX if present
     if let Some(crx_path) = find_crx() {
         install_crx(&crx_path, extension_id, &dest_dir)?;
         report.crx_installed = true;

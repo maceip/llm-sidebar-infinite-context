@@ -13,7 +13,7 @@
 const nodeCrypto = require('node:crypto');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const yazl = require('yazl');
 
 const projectRoot = path.resolve(__dirname, '..');
 const distDir = path.join(projectRoot, 'dist');
@@ -47,19 +47,36 @@ function getPrivateKey() {
   return null;
 }
 
-function createZip(sourceDir) {
-  const zipPath = path.join(projectRoot, 'dist-ext.zip');
-  // Remove old zip
-  if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
+async function createZip(sourceDir) {
+  const zipfile = new yazl.ZipFile();
 
-  // We need to zip the contents of dist/, not the dist/ dir itself
-  execSync(`cd "${sourceDir}" && zip -r "${zipPath}" . -x "*.crx" "*.zip"`, {
-    stdio: 'pipe',
+  function addDirectory(currentDir, relativeDir = '') {
+    for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+      const absPath = path.join(currentDir, entry.name);
+      const relPath = relativeDir
+        ? path.posix.join(relativeDir, entry.name)
+        : entry.name;
+
+      if (entry.isDirectory()) {
+        addDirectory(absPath, relPath);
+      } else if (entry.isFile()) {
+        if (relPath.endsWith('.crx') || relPath.endsWith('.zip')) {
+          continue;
+        }
+        zipfile.addFile(absPath, relPath);
+      }
+    }
+  }
+
+  addDirectory(sourceDir);
+  zipfile.end();
+
+  return await new Promise((resolve, reject) => {
+    const chunks = [];
+    zipfile.outputStream.on('data', (chunk) => chunks.push(chunk));
+    zipfile.outputStream.on('end', () => resolve(Buffer.concat(chunks)));
+    zipfile.outputStream.on('error', reject);
   });
-
-  const zipBuf = fs.readFileSync(zipPath);
-  fs.unlinkSync(zipPath);
-  return zipBuf;
 }
 
 /**
@@ -197,7 +214,7 @@ async function main() {
   }
 
   console.log('Creating zip of dist/...');
-  const zipBuf = createZip(distDir);
+  const zipBuf = await createZip(distDir);
 
   console.log('Packing CRX3...');
   const crxBuf = packCrx3(zipBuf, pemKey);

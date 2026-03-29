@@ -167,6 +167,7 @@ native/target/release/llm-sidebar-installer diagnose
 ```
 
 The installer will:
+
 - Copy `llm-sidebar-host` and `overlay-companion` to `~/.local/share/llm-sidebar/` (Linux/macOS) or `%LOCALAPPDATA%\LLMSidebar\` (Windows)
 - Detect all installed Chromium browsers (Chrome, Chromium, Brave, Edge, Vivaldi)
 - Write native messaging host manifests for each browser
@@ -174,15 +175,15 @@ The installer will:
 
 ### Commands Reference
 
-| Command                         | Description                                     |
-| :------------------------------ | :---------------------------------------------- |
-| `npm run build`                 | Builds the extension to `dist/`                 |
-| `npm test`                      | Runs unit tests with Vitest (312 tests)         |
-| `npm run lint`                  | Runs ESLint                                     |
-| `npm run format`                | Formats code with Prettier                      |
-| `npm run type-check`            | Runs TypeScript type checking                   |
-| `npm run pack-crx`              | Packs extension as signed CRX3                  |
-| `npm run test:native-companion` | Runs the Puppeteer/native companion harness     |
+| Command                         | Description                                 |
+| :------------------------------ | :------------------------------------------ |
+| `npm run build`                 | Builds the extension to `dist/`             |
+| `npm test`                      | Runs unit tests with Vitest (312 tests)     |
+| `npm run lint`                  | Runs ESLint                                 |
+| `npm run format`                | Formats code with Prettier                  |
+| `npm run type-check`            | Runs TypeScript type checking               |
+| `npm run pack-crx`              | Packs extension as signed CRX3              |
+| `npm run test:native-companion` | Runs the Puppeteer/native companion harness |
 
 ### Project Structure
 
@@ -221,16 +222,16 @@ The native companion is designed around a durable daemon + native-messaging brid
 
 The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, launches Chrome headless with the unpacked extension, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
 
-| Artifact | Platform |
-|----------|----------|
-| `llm-sidebar.crx` | All (Chrome extension) |
-| `llm-sidebar-extension.zip` | All (Chrome Web Store) |
-| `llm-sidebar-linux-amd64.tar.gz` | Linux |
-| `llm-sidebar_1.0.0_amd64.deb` | Linux (Debian/Ubuntu) |
-| `llm-sidebar-macos-amd64.dmg` | macOS Intel |
-| `llm-sidebar-macos-arm64.dmg` | macOS Apple Silicon |
-| `llm-sidebar-windows-amd64.msi` | Windows |
-| `llm-sidebar-windows-amd64.zip` | Windows |
+| Artifact                         | Platform               |
+| -------------------------------- | ---------------------- |
+| `llm-sidebar.crx`                | All (Chrome extension) |
+| `llm-sidebar-extension.zip`      | All (Chrome Web Store) |
+| `llm-sidebar-linux-amd64.tar.gz` | Linux                  |
+| `llm-sidebar_1.0.0_amd64.deb`    | Linux (Debian/Ubuntu)  |
+| `llm-sidebar-macos-amd64.dmg`    | macOS Intel            |
+| `llm-sidebar-macos-arm64.dmg`    | macOS Apple Silicon    |
+| `llm-sidebar-windows-amd64.msi`  | Windows                |
+| `llm-sidebar-windows-amd64.zip`  | Windows                |
 
 ### Environment Variables
 

@@ -1,173 +1,200 @@
-# Research: Account/Service Dependencies from GitHub Trending Projects
+# Research: High-Value Legacy Developer Accounts & Infrastructure Services
 
 ## Context
 
-This research identifies which external accounts, API keys, and services are most commonly required by trending GitHub projects in TypeScript, JavaScript, Swift, and Rust — specifically focused on agent and agent-adjacent developer tooling. The goal is to derive an initial list of "high-value" accounts that are hard to share, hard to get, or essential for developers building with these tools.
+This research identifies the **foundational "legacy" accounts** — the core infrastructure services that existed before AI — that are most commonly required by trending GitHub projects and most valued by developers broadly. These are accounts that are hard to share, hard to replace, identity-verified, and accumulate value over time (reputation, billing history, service limits).
 
 ## Methodology
 
-- Scraped GitHub Trending (daily) for TypeScript, JavaScript, Swift, and Rust on 2026-03-28
-- Analyzed ~30 trending repositories
-- Extracted all required services from `.env.example` files, READMEs, docker-compose configs, and config files
+1. Scraped GitHub Trending (daily, 2026-03-28) for TypeScript, JavaScript, Swift, and Rust (~30 repos)
+2. Analyzed `.env.example` files, docker-compose configs, `package.json`, and READMEs for infrastructure dependencies
+3. Cross-referenced with 2025 StackOverflow Developer Survey, JetBrains State of Developer Ecosystem, and industry market share data
 
 ---
 
-## Consolidated Service Frequency Map
+## Recommended Initial Supported Services
 
-Ranked by how many trending projects require or support each service:
+### Tier 1: Core Infrastructure (Nearly Universal)
 
-### Tier 1: Ubiquitous (5+ projects)
+These appear in 5-8 of the 10 analyzed trending projects and are foundational to virtually all developer work.
 
-| Service | Category | Projects Using It |
-|---------|----------|-------------------|
-| **OpenAI** (API key) | LLM Provider | dexter, twenty, anything-llm, cline, firecrawl, cc-switch, tabby, cube |
-| **Anthropic / Claude** (API key or subscription) | LLM Provider | dexter, twenty, anything-llm, cline, oh-my-claudecode, learn-claude-code, cc-switch |
-| **Google Gemini** (API key) | LLM Provider | dexter, twenty, anything-llm, cline, 9router, cc-switch |
-| **GitHub** (OAuth / Copilot subscription / tokens) | Auth + AI | CopilotForXcode, 9router, komodo, tabby, figma-mcp |
-| **PostgreSQL** (connection string) | Database | twenty, firecrawl, superset, OpenMetadata, cube |
-| **Redis** (connection URL) | Cache/Queue | twenty, firecrawl, superset, OpenMetadata |
+| # | Service | Category | Trending Repo Count | Why High-Value |
+|---|---------|----------|:-------------------:|----------------|
+| 1 | **AWS** | Cloud / IaaS | 6 (S3, SDK, SES, Bedrock, EC2, CloudWatch) | Largest cloud. Account age unlocks higher service limits. Reserved instances, billing history, IAM configs are non-transferable |
+| 2 | **PostgreSQL hosting** (Supabase, Neon, RDS, self-hosted) | Database | 7 | #1 admired DB (StackOverflow). Production data + backup history = irreplaceable |
+| 3 | **Redis hosting** (Redis Cloud, ElastiCache, self-hosted) | Cache / Queue | 6 | Universal caching layer. Session data, job queues |
+| 4 | **Docker Hub** | Container Registry | 8 (Docker/Compose universal) | Image hosting, pull rate limits tied to account |
+| 5 | **GitHub** | Source Control / OAuth | 5 | Contribution history, org memberships, SSH keys, Actions minutes, PATs |
 
-### Tier 2: Very Common (3-4 projects)
+### Tier 2: Identity & Money (Hardest to Replace)
 
-| Service | Category | Projects Using It |
-|---------|----------|-------------------|
-| **AWS** (access key + secret) | Cloud IaaS | cline (S3/Bedrock), cube (Athena/S3), komodo, anything-llm (Bedrock) |
-| **Groq** (API key) | LLM Provider | twenty, anything-llm, cline |
-| **Google OAuth / GCP** (client ID + secret) | Auth / Cloud | twenty, komodo, OpenMetadata, cube (BigQuery) |
-| **Azure / Microsoft** (OAuth or OpenAI endpoint) | Auth / Cloud | twenty, cline, OpenMetadata |
-| **Slack** (webhook URL) | Notifications | firecrawl, oh-my-claudecode, OpenMetadata |
-| **Stripe** (API key / price IDs) | Payments | firecrawl, easy-vibe |
-| **SMTP / Email** (server creds) | Email | twenty, OpenMetadata, tabby, superset |
-| **OpenRouter** (API key) | LLM Router | dexter, anything-llm, cline |
-| **Supabase** (anon token + service token) | BaaS | firecrawl, easy-vibe |
-| **Mistral** (API key) | LLM Provider | twenty, anything-llm |
-| **DeepSeek** (API key) | LLM Provider | dexter, anything-llm |
+These are **identity-verified**, accumulate reputation, and are the hardest accounts to recreate from scratch.
 
-### Tier 3: Common (2 projects)
+| # | Service | Category | Market Position | Why High-Value |
+|---|---------|----------|-----------------|----------------|
+| 6 | **Stripe** | Payments | Gold standard; $1.4T processed in 2024 | Identity-verified, processing history builds better rates, chargeback ratio tied to account |
+| 7 | **Apple Developer Program** | App Store | Required for all iOS distribution | $99/yr, identity-bound, app review history, provisioning profiles, push notification certs |
+| 8 | **Google Play Console** | App Store | Required for all Android distribution | $25 one-time, now requires gov't ID + device verification (post-Nov 2023), testing requirements |
+| 9 | **Twilio** | SMS / Phone Numbers | Dominant; 100+ countries | Phone numbers, short codes, 10DLC campaigns take weeks to register. Throughput limits tied to account |
+| 10 | **Cloudflare** | CDN / DNS / Edge | 40-64% developer market share | Bundles DNS + CDN + DDoS + Workers + R2 + Zero Trust. Configured zones + DNS records = critical infra |
 
-| Service | Category | Projects Using It |
-|---------|----------|-------------------|
-| **Pinecone** (API key) | Vector DB | anything-llm |
-| **Weaviate** (API key + endpoint) | Vector DB | anything-llm |
-| **Qdrant** (API key + endpoint) | Vector DB | anything-llm |
-| **Perplexity** (API key) | Search/LLM | dexter, anything-llm |
-| **Tavily** (API key) | Search API | dexter, anything-llm |
-| **Figma** (OAuth) | Design | figma-mcp, easy-vibe |
-| **Atlassian / Jira / Confluence** (OAuth) | Project Mgmt | atlassian-mcp |
-| **Sentry** (DSN) | Error Monitoring | twenty |
-| **PostHog** (API key) | Analytics | firecrawl, cline |
-| **Cloudflare** (API key + zone ID) | CDN/DNS | twenty |
-| **ElevenLabs** (API key) | TTS | anything-llm |
-| **Hugging Face** (access token) | Models | anything-llm, mlx-swift-lm |
-| **Discord** (webhook) | Notifications | oh-my-claudecode |
-| **Telegram** (bot token + chat ID) | Notifications | oh-my-claudecode |
-| **Moonshot AI / Kimi** (API key) | LLM Provider | dexter, 9router, learn-claude-code |
-| **xAI / Grok** (API key) | LLM Provider | dexter, twenty |
-| **Together AI** (API key) | LLM Provider | anything-llm |
-| **Fireworks AI** (API key) | LLM Provider | anything-llm |
-| **Cohere** (API key) | LLM Provider | anything-llm |
-| **Snowflake** (account + key) | Data Warehouse | cube, superset |
-| **Databricks** (token or OAuth) | Data Platform | cube |
-| **Elasticsearch / OpenSearch** | Search Engine | OpenMetadata, cube |
+### Tier 3: Auth, Email & Comms (Reputation-Based)
 
-### Tier 4: Niche but High-Value (1 project, notable)
+Accounts where **reputation accumulates over time** — sender scores, trust levels, verification status.
 
-| Service | Category | Project |
-|---------|----------|---------|
-| **Financial Datasets** (financialdatasets.ai) | Data API | dexter |
-| **ScrapingBee** (API key) | Web Scraping | firecrawl |
-| **LlamaParse** (API key) | Document Parsing | firecrawl |
-| **Resend** (API key) | Email API | firecrawl |
-| **Coinbase CDP** (API key) | Crypto | firecrawl |
-| **Voyage AI** (API key) | Embeddings | anything-llm |
-| **SerpAPI / Serper / SearchAPI** | Search APIs | anything-llm |
-| **Bing Search** (API key) | Search API | anything-llm |
-| **Exa** (API key) | Search API | dexter, anything-llm |
-| **LangSmith** (API key) | Observability | dexter |
-| **Mapbox** (API key) | Maps | superset |
-| **X / Twitter** (bearer token) | Social API | dexter |
-| **Zhipu AI / GLM** (API key) | LLM (China) | 9router, learn-claude-code |
-| **MiniMax** (API key) | LLM (China) | 9router, learn-claude-code |
-| **SambaNova** (API key) | LLM Provider | anything-llm |
-| **NVIDIA NIM** (endpoint) | LLM Provider | anything-llm, cc-switch |
-| **Chroma Cloud** (API key) | Vector DB | anything-llm, chroma |
-| **Zilliz** (API token + endpoint) | Vector DB | anything-llm |
-| **Astra DB / DataStax** (app token) | Vector DB | anything-llm |
-| **ClickHouse** (connection URL) | Analytics DB | twenty |
-| **TiKV** (PD endpoints) | Distributed KV | surrealdb |
-| **MongoDB / FerretDB** (credentials) | Document DB | komodo |
-| **Dify** (platform account) | RAG Workflow | easy-vibe |
-| **Vercel** (deployment account) | Hosting | easy-vibe |
+| # | Service | Category | Trending Repo Count | Why High-Value |
+|---|---------|----------|:-------------------:|----------------|
+| 11 | **SendGrid** (Twilio) | Email API | 3 (SMTP generic) | Market leader. Sender reputation takes months to build. Free plan removed — existing accounts grandfathered |
+| 12 | **Auth0** (Okta) | Authentication | 3 (OIDC generic) | Incumbent. Configured tenants + user credential stores are extremely painful to migrate |
+| 13 | **Google OAuth** (GCP Console) | Social Login | 4 | Most common social auth. Consent screen verification for production takes weeks |
+| 14 | **Microsoft / Azure** | Cloud + OAuth | 2-3 | Enterprise standard. Azure AD tenant setup, verified publisher status |
+| 15 | **Slack** | Communication | 3 | Bot tokens, workspace integrations, app directory listings |
 
----
+### Tier 4: Hosting & Deployment (Where Code Runs)
 
-## Recommended Initial Supported Services List
+| # | Service | Category | Market Position | Why High-Value |
+|---|---------|----------|-----------------|----------------|
+| 16 | **Vercel** | Frontend Hosting | Dominant for Next.js/React | Team plans, domain configs, environment variables, preview deployments |
+| 17 | **GCP / Google Cloud** | Cloud / IaaS | ~10% market share | BigQuery, Firebase, GKE. Service account keys, project configs |
+| 18 | **DigitalOcean** | Cloud / VPS | Top developer-focused | Simple pricing, droplet snapshots, managed databases |
+| 19 | **Netlify** | Frontend Hosting | #2 Jamstack platform | Build configs, deploy hooks, form handling |
+| 20 | **Fly.io / Railway / Render** | App Hosting | Growing fast | Edge deployment, managed Postgres, environment configs |
 
-Based on frequency across trending projects, developer demand, and "hard to share / high value" characteristics:
+### Tier 5: Observability & Ops (Historical Data Lock-in)
 
-### Must-Have (Core AI + Cloud)
-1. **OpenAI** — API key (used by 8+ projects)
-2. **Anthropic / Claude** — API key or Max subscription (7+ projects)
-3. **Google Gemini** — API key (6+ projects)
-4. **GitHub** — OAuth tokens, Copilot subscription, PATs (5+ projects)
-5. **AWS** — Access key + secret (Bedrock, S3, Athena) (4+ projects)
-6. **Azure / Microsoft** — OAuth, OpenAI endpoint (3+ projects)
-7. **GCP / Google Cloud** — Service account, BigQuery (3+ projects)
+| # | Service | Category | Trending Repo Count | Why High-Value |
+|---|---------|----------|:-------------------:|----------------|
+| 21 | **Sentry** | Error Tracking | 3 | Configured alert rules, issue history, release tracking |
+| 22 | **Datadog** | Monitoring / APM | 1 (+ market leader) | 600+ integrations. Historical dashboards, alert policies = months of setup |
+| 23 | **PostHog** | Product Analytics | 2 | Event definitions, dashboards, feature flags, session recordings |
+| 24 | **PagerDuty** | Incident Management | Industry standard | On-call schedules, escalation policies, integration configs |
+| 25 | **Grafana Cloud** | Observability | 1 (+ open-source standard) | Prometheus + Loki + Tempo stack. Dashboard configs |
 
-### High-Value (Common Developer Services)
-8. **Groq** — API key (fast inference, 3 projects)
-9. **OpenRouter** — API key (LLM routing, 3 projects)
-10. **Mistral** — API key (2+ projects)
-11. **DeepSeek** — API key (2+ projects)
-12. **Supabase** — Anon token + service token (2+ projects)
-13. **Stripe** — API key (payments, 2+ projects)
-14. **Slack** — Webhook URL / bot token (3+ projects)
-15. **Figma** — OAuth (2 projects, high-value design tool)
-16. **Atlassian (Jira/Confluence)** — OAuth (high-value enterprise tool)
+### Tier 6: Database & Storage (Data Lock-in)
 
-### Important Infrastructure
-17. **PostgreSQL** — Connection credentials (5 projects)
-18. **Redis** — Connection URL (4 projects)
-19. **Pinecone** — API key (vector DB leader)
-20. **Hugging Face** — Access token (model hub)
+| # | Service | Category | Trending Repo Count | Why High-Value |
+|---|---------|----------|:-------------------:|----------------|
+| 26 | **MongoDB Atlas** | Document DB | 2 | Managed clusters, backup schedules, connection strings |
+| 27 | **Supabase** | BaaS (Postgres + Auth + Realtime) | 2 | Row-level security policies, auth configs, edge functions |
+| 28 | **S3 / R2 / GCS** | Object Storage | 3 (S3) + 1 (R2) | Bucket policies, lifecycle rules, CORS configs, stored data |
+| 29 | **Elasticsearch / OpenSearch** | Search Engine | 2 | Index mappings, analyzer configs, stored indices |
+| 30 | **ClickHouse** | Analytics DB | 2 | Materialized views, aggregation configs |
 
-### Search & Data APIs
-21. **Tavily** — API key (AI search, 2 projects)
-22. **Exa** — API key (AI search, 2 projects)
-23. **Perplexity** — API key (search + LLM, 2 projects)
-24. **SerpAPI / Serper** — API key (web search)
+### Tier 7: Communication & Virtual Numbers
 
-### Observability & Notifications
-25. **Sentry** — DSN (error monitoring)
-26. **PostHog** — API key (analytics)
-27. **LangSmith** — API key (LLM observability)
-28. **Discord** — Webhook / bot token
-29. **Telegram** — Bot token + chat ID
+| # | Service | Category | Market Position | Why High-Value |
+|---|---------|----------|-----------------|----------------|
+| 31 | **Vonage** (Nexmo) | SMS / Voice | #2 after Twilio | Numbers in 200+ countries, per-second billing |
+| 32 | **Telnyx** | SMS / Voice | Growing; owns network | SMS from $0.004/msg, SIP trunking |
+| 33 | **Discord** | Bot Platform | Universal dev community | Bot tokens, server integrations, webhook configs |
+| 34 | **Telegram** | Bot Platform | Growing for notifications | Bot tokens, chat IDs |
+| 35 | **Resend** | Email API | Modern newcomer | Developer-friendly, growing fast. Found in firecrawl |
 
-### Emerging / China Market
-30. **Moonshot AI / Kimi** — API key (3 projects)
-31. **Zhipu AI / GLM** — API key (2 projects)
-32. **MiniMax** — API key (2 projects)
-33. **xAI / Grok** — API key (2 projects)
+### Tier 8: Domain & SSL
+
+| # | Service | Category | Market Position | Why High-Value |
+|---|---------|----------|-----------------|----------------|
+| 36 | **Cloudflare Registrar** | Domain Registration | At-cost pricing | Domains + DNS + CDN in one account |
+| 37 | **Namecheap** | Domain Registration | Popular with devs | Domain portfolio, DNS configs |
+| 38 | **Let's Encrypt / ZeroSSL** | SSL/TLS | Free standard | ACME configs, auto-renewal scripts |
+
+### Tier 9: Maps & Media
+
+| # | Service | Category | Trending Repo Count | Why High-Value |
+|---|---------|----------|:-------------------:|----------------|
+| 39 | **Mapbox** | Maps | 1 (superset) | Custom map styles, tilesets, geocoding quotas |
+| 40 | **Cloudinary** | Media Processing | Market leader | Transformation pipelines, stored assets, delivery configs |
 
 ---
 
-## Source Projects Analyzed
+## Frequency Heatmap: Infrastructure Services in Trending Repos
 
-### TypeScript (11 repos)
-- virattt/dexter, twentyhq/twenty, apache/superset, Yeachan-Heo/oh-my-claudecode, shareAI-lab/learn-claude-code, benjitaylor/agentation, firecrawl/firecrawl, open-metadata/OpenMetadata, vercel-labs/json-render, cline/cline, thedotmack/claude-mem
+From direct `.env.example` / docker-compose analysis of 10 deeply-analyzed repos:
 
-### JavaScript (7 repos)
-- Mintplex-Labs/anything-llm, figma/mcp-server-guide, decolua/9router, atlassian/atlassian-mcp-server, datawhalechina/easy-vibe, EmulatorJS/EmulatorJS, zen-browser/desktop
-
-### Swift (6 repos)
-- github/CopilotForXcode, ml-explore/mlx-swift-lm, manaflow-ai/cmux, tuist/tuist, alienator88/Sentinel, PlayCover/PlayCover
-
-### Rust (7 repos)
-- TabbyML/tabby, chroma-core/chroma, surrealdb/surrealdb, cube-js/cube, moghtech/komodo, farion1231/cc-switch, denoland/deno
+```
+PostgreSQL          ███████  7/10
+Docker/Compose      ████████ 8/10
+Redis               ██████   6/10
+JWT/Custom Auth     ██████   6/10
+Google OAuth        ████     4/10
+OpenTelemetry       ████     4/10
+AWS S3              ███      3/10
+AWS SDK             ███      3/10
+SMTP/Email          ███      3/10
+Sentry              ███      3/10
+Prometheus          ███      3/10
+GitHub OAuth        ███      3/10
+OIDC (generic)      ███      3/10
+Kubernetes          ███      3/10
+SSL/TLS certs       ███      3/10
+Stripe              ██       2/10
+Cloudflare          ██       2/10
+PostHog             ██       2/10
+Slack               ██       2/10
+ClickHouse          ██       2/10
+Elasticsearch       ██       2/10
+Microsoft OAuth     ██       2/10
+MySQL               ██       2/10
+MongoDB             ██       2/10
+Google Cloud SDK    ██       2/10
+Azure SDK           ██       2/10
+```
 
 ---
 
-## Key Insight
+## Top 10 Highest-Value Legacy Accounts (Ranked by Replacement Difficulty)
 
-The overwhelming pattern is that **LLM API keys dominate** — OpenAI, Anthropic, Google, and increasingly Groq/DeepSeek/Mistral are required by the vast majority of agent projects. The second tier is **cloud infrastructure** (AWS/GCP/Azure) and **developer platform OAuth** (GitHub, Atlassian, Figma). The third tier is **specialized APIs** (search, vector DBs, observability). Agent developers in 2026 need a minimum of 3-5 API keys just to get started with any trending project.
+These accounts accumulate value over time and are hardest to recreate:
+
+1. **AWS account** — Service limits increase with age, billing history, reserved instances, IAM configs
+2. **Stripe account** — Identity-verified, processing volume unlocks better rates, chargeback history
+3. **Apple Developer account** — Annual fee, identity-bound, provisioning profiles, app review history, push certs
+4. **Cloudflare account** — DNS zones, CDN configs, Workers, R2 buckets, Zero Trust policies
+5. **Twilio account** — Phone numbers, short codes, 10DLC campaigns (weeks to register), sender verification
+6. **Google Play Console** — Gov't ID required, testing requirements, app signing keys
+7. **GitHub account** — Contribution graph, org memberships, SSH keys, Actions history, package registry
+8. **SendGrid account** — Sender reputation takes months to build, free tier removed
+9. **Auth0 account** — User credential stores, tenant configs, compliance certs (migrating users = nightmare)
+10. **Datadog account** — Historical dashboards, alert policies, 600+ configured integrations
+
+---
+
+## Summary: Recommended Initial Service List by Category
+
+| Category | Services |
+|----------|----------|
+| **Cloud / Compute** | AWS, GCP, Azure, DigitalOcean, Vercel, Netlify |
+| **CDN / DNS / Domains** | Cloudflare, Namecheap |
+| **Database** | PostgreSQL (Supabase/Neon/RDS), Redis, MongoDB Atlas, Elasticsearch |
+| **Object Storage** | S3, Cloudflare R2, GCS |
+| **Payments** | Stripe |
+| **Email** | SendGrid, Resend, Amazon SES |
+| **SMS / Phone** | Twilio, Vonage, Telnyx |
+| **Auth / Identity** | Auth0, Google OAuth, GitHub OAuth |
+| **App Stores** | Apple Developer, Google Play Console |
+| **Container Registry** | Docker Hub, GitHub Container Registry |
+| **Monitoring** | Sentry, Datadog, Grafana Cloud, PagerDuty |
+| **Analytics** | PostHog |
+| **Communication** | Slack, Discord, Telegram |
+| **Maps** | Mapbox |
+| **Media** | Cloudinary |
+| **SSL** | Let's Encrypt, ZeroSSL |
+
+---
+
+## Source Data
+
+### Trending Repos Analyzed (2026-03-28)
+
+**TypeScript:** virattt/dexter, twentyhq/twenty, apache/superset, Yeachan-Heo/oh-my-claudecode, shareAI-lab/learn-claude-code, benjitaylor/agentation, firecrawl/firecrawl, open-metadata/OpenMetadata, vercel-labs/json-render, cline/cline, thedotmack/claude-mem
+
+**JavaScript:** Mintplex-Labs/anything-llm, figma/mcp-server-guide, decolua/9router, atlassian/atlassian-mcp-server, datawhalechina/easy-vibe, EmulatorJS/EmulatorJS, zen-browser/desktop
+
+**Swift:** github/CopilotForXcode, ml-explore/mlx-swift-lm, manaflow-ai/cmux, tuist/tuist, alienator88/Sentinel, PlayCover/PlayCover
+
+**Rust:** TabbyML/tabby, chroma-core/chroma, surrealdb/surrealdb, cube-js/cube, moghtech/komodo, farion1231/cc-switch, denoland/deno
+
+### Market Research Sources
+- 2025 StackOverflow Developer Survey
+- JetBrains State of Developer Ecosystem 2025
+- Industry market share reports (6sense, Northflank, BlazingCDN, SplitMetrics)

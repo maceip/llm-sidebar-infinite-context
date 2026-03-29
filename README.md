@@ -98,11 +98,27 @@ This Chrome Extension allows you to interact with Gemini models in a sidebar, us
 | Command                         | Description                                 |
 | :------------------------------ | :------------------------------------------ |
 | `npm run build`                 | Builds the extension to `dist/`             |
+| `npm run build:native`          | Builds the Rust host, installer, and overlay companion |
+| `npm run build:package`         | Builds extension, native binaries, CRX, and staged installer assets |
+| `npm run installer:install`     | Builds package artifacts and runs the Rust installer |
+| `npm run installer:uninstall`   | Runs the Rust installer uninstall flow      |
 | `npm test`                      | Runs unit tests with Vitest                 |
 | `npm run lint`                  | Runs ESLint                                 |
 | `npm run format`                | Formats code with Prettier                  |
 | `npm run type-check`            | Runs TypeScript type checking               |
 | `npm run test:native-companion` | Runs the Puppeteer/native companion harness |
+
+### Installer machinery
+
+A Rust installer now exists under `native/installer/` and is wired into npm. The supported path is:
+
+1. `npm run build:package` to build the extension, native host, installer, and a dev CRX, then stage everything into `dist-installer/`
+2. `npm run installer:install` to run the installer from the staged bundle
+3. `npm run installer:uninstall` to remove the installed native host / extension registration
+
+`build:package` uses a generated development key by default (`pack-crx:dev`) so the npm path works without extra setup. For production packaging, use `CRX_PRIVATE_KEY` or `node build-scripts/pack-crx.js --key <pem>`.
+
+The installer expects the packaged CRX and `llm-sidebar-host` binary to be staged next to `llm-sidebar-installer` in `dist-installer/`.
 
 ### Native companion foundation
 

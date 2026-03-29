@@ -29,7 +29,12 @@ import {
   GetHistoryResponse,
   MemoryStatsResponse,
   NativeCompanionStatusResponse,
+  ContextRetrievalSnapshot,
 } from '../types';
+import {
+  createContextRibbon,
+  MemoryVisualization,
+} from '../memoryVisualization';
 import {
   ISyncStorageService,
   ILocalStorageService,
@@ -53,6 +58,9 @@ export class SidebarController {
   private agentdropButton: HTMLButtonElement;
   private statusModel: HTMLElement | null;
   private statusMemory: HTMLElement | null;
+  private companionDot: HTMLElement | null;
+  private companionLabel: HTMLElement | null;
+  private companionPill: HTMLElement | null;
   private memoryPanel: HTMLElement | null;
   private memoryPanelToggle: HTMLElement | null;
   private memoryPanelBody: HTMLElement | null;
@@ -63,6 +71,10 @@ export class SidebarController {
   private nativeOverlayStatusPill: HTMLElement | null;
   private showNativeOverlayButton: HTMLButtonElement;
   private hideNativeOverlayButton: HTMLButtonElement;
+  private memoryLastRetrieval: HTMLElement | null;
+  private memoryPanelVizContainer: HTMLElement | null;
+  private memoryPanelViz: MemoryVisualization | null = null;
+  private lastSnapshot: ContextRetrievalSnapshot | null = null;
 
   private pinnedContexts: TabInfo[] = [];
   private currentTab: TabInfo | null = null;
@@ -112,6 +124,9 @@ export class SidebarController {
     ) as HTMLButtonElement;
     this.statusModel = document.getElementById('status-model');
     this.statusMemory = document.getElementById('status-memory');
+    this.companionDot = document.getElementById('companion-dot');
+    this.companionLabel = document.getElementById('companion-label');
+    this.companionPill = document.getElementById('status-companion');
     this.memoryPanel = document.getElementById('memory-panel');
     this.memoryPanelToggle = document.getElementById('memory-panel-toggle');
     this.memoryPanelBody = document.getElementById('memory-panel-body');
@@ -128,6 +143,8 @@ export class SidebarController {
     this.hideNativeOverlayButton = document.getElementById(
       'hide-native-overlay-button',
     ) as HTMLButtonElement;
+    this.memoryLastRetrieval = document.getElementById('memory-last-retrieval');
+    this.memoryPanelVizContainer = document.getElementById('memory-panel-viz');
 
     this.setupEventListeners();
   }
@@ -295,11 +312,50 @@ export class SidebarController {
     await this.refreshMemoryStats();
     await this.refreshNativeOverlayStatus();
 
-    // Periodic heartbeat to catch missed tab updates
+    // Check native companion status
+    this.refreshCompanionStatus();
+
+    // Periodic heartbeat to catch missed tab updates and refresh companion/native state
     this.refreshInterval = setInterval(() => {
       void this.refreshCurrentTab();
       void this.refreshNativeOverlayStatus();
+      void this.refreshCompanionStatus();
     }, 2000);
+  }
+
+  private async refreshCompanionStatus(): Promise<void> {
+    try {
+      const response = await this.messageService.sendMessage<{
+        state: { connectionState: string };
+      }>({
+        type: MessageTypes.NATIVE_COMPANION_STATUS,
+      });
+      if (response?.state) {
+        this.updateCompanionIndicator(response.state.connectionState);
+      }
+    } catch {
+      this.updateCompanionIndicator('disconnected');
+    }
+  }
+
+  private updateCompanionIndicator(state: string): void {
+    if (!this.companionDot || !this.companionLabel || !this.companionPill) return;
+
+    // Remove all state classes
+    this.companionDot.classList.remove('connected', 'connecting', 'disconnected', 'degraded');
+    this.companionDot.classList.add(state === 'connected' ? 'connected' :
+      state === 'connecting' ? 'connecting' :
+      state === 'degraded' ? 'degraded' : 'disconnected');
+
+    const labels: Record<string, string> = {
+      connected: 'Native OK',
+      connecting: 'Connecting',
+      degraded: 'Degraded',
+      disconnected: 'No Native',
+      disabled: 'Disabled',
+    };
+    this.companionLabel.textContent = labels[state] || state;
+    this.companionPill.title = `Native companion: ${state}`;
   }
 
   private async loadHistory() {
@@ -476,6 +532,22 @@ export class SidebarController {
     } catch {
       // Silently ignore - stats are non-critical
     }
+
+    // Update memory panel visualization with last retrieval snapshot
+    try {
+      const snapResponse = await this.messageService.sendMessage<{
+        success: boolean;
+        snapshot: ContextRetrievalSnapshot | null;
+      }>({
+        type: MessageTypes.GET_CONTEXT_SNAPSHOT,
+      });
+      if (snapResponse?.success && snapResponse.snapshot) {
+        this.lastSnapshot = snapResponse.snapshot;
+        this.updateMemoryPanelViz(snapResponse.snapshot);
+      }
+    } catch {
+      // Non-critical
+    }
   }
 
   private formatTimeAgo(timestamp: number): string {
@@ -547,6 +619,52 @@ export class SidebarController {
       this.appendMessage('system', `System: ${response.message}`);
     }
     await this.refreshNativeOverlayStatus();
+  }
+
+  private updateMemoryPanelViz(snapshot: ContextRetrievalSnapshot): void {
+    if (!this.memoryLastRetrieval || !this.memoryPanelVizContainer) return;
+
+    this.memoryLastRetrieval.style.display = '';
+
+    if (!this.memoryPanelViz) {
+      this.memoryPanelViz = new MemoryVisualization(
+        this.memoryPanelVizContainer,
+      );
+    }
+    this.memoryPanelViz.update(snapshot);
+  }
+
+  private attachContextRibbon(
+    messageEl: HTMLDivElement,
+    snapshot: ContextRetrievalSnapshot,
+  ): void {
+    const ribbon = createContextRibbon(snapshot);
+    messageEl.appendChild(ribbon);
+    this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+  }
+
+  private pulseMemoryStatus(snapshot: ContextRetrievalSnapshot): void {
+    if (!this.statusMemory) return;
+
+    const count = snapshot.retrievedEpisodes.length;
+    const originalHTML = this.statusMemory.innerHTML;
+
+    this.statusMemory.classList.add('pulse');
+    this.statusMemory.innerHTML = `<span class="status-dot"></span>${count} recalled`;
+
+    this.statusMemory.addEventListener(
+      'animationend',
+      () => {
+        this.statusMemory?.classList.remove('pulse');
+      },
+      { once: true },
+    );
+
+    setTimeout(() => {
+      if (this.statusMemory) {
+        this.statusMemory.innerHTML = originalHTML;
+      }
+    }, 3000);
   }
 
   private async saveApiKey() {
@@ -625,9 +743,20 @@ export class SidebarController {
           this.showWelcomeMessage();
         }
       } else if (response && response.reply) {
-        this.appendMessage('model', response.reply, duration);
+        const msgEl = await this.appendMessage(
+          'model',
+          response.reply,
+          duration,
+        );
+        if (
+          response.contextSnapshot &&
+          response.contextSnapshot.retrievedEpisodes.length > 0
+        ) {
+          this.attachContextRibbon(msgEl, response.contextSnapshot);
+          this.pulseMemoryStatus(response.contextSnapshot);
+        }
       } else if (response && response.error) {
-        this.appendMessage('error', `Error: ${response.error}`);
+        await this.appendMessage('error', `Error: ${response.error}`);
       }
     } catch (error) {
       clearInterval(timerInterval);
@@ -660,7 +789,11 @@ export class SidebarController {
     return thinkingMessageElement;
   }
 
-  private async appendMessage(sender: string, text: string, duration?: number) {
+  private async appendMessage(
+    sender: string,
+    text: string,
+    duration?: number,
+  ): Promise<HTMLDivElement> {
     const messageElement = document.createElement('div');
     messageElement.classList.add('message', sender);
     if (sender === 'model') {
@@ -689,6 +822,7 @@ export class SidebarController {
     }
     this.messagesDiv.appendChild(messageElement);
     this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+    return messageElement;
   }
 
   private async copyToClipboard(text: string, button: HTMLButtonElement) {

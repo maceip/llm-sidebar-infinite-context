@@ -38,6 +38,10 @@
           <span class="status-dot"></span>
           0 memories
         </span>
+        <span class="status-pill companion" id="status-companion" title="Native companion status">
+          <span class="status-dot companion-dot" id="companion-dot"></span>
+          <span id="companion-label">Companion</span>
+        </span>
         <span class="status-pill model" id="native-overlay-status-pill">
           Overlay: checking
         </span>
@@ -109,6 +113,14 @@
           class="memory-panel-body"
           style="display: none"
         >
+          <div
+            id="memory-last-retrieval"
+            class="memory-last-retrieval"
+            style="display: none"
+          >
+            <div class="memory-section-label">Last Retrieval</div>
+            <div id="memory-panel-viz" class="memory-panel-viz-container"></div>
+          </div>
           <div class="memory-indicator">
             <span class="memory-label">Context Window</span>
             <div class="memory-bar">
@@ -179,12 +191,6 @@
           <div class="button-group">
             <button id="agentdrop-button" title="Add Agent to Page">
               Agent Drop
-            </button>
-            <button id="show-native-overlay-button" title="Show native overlay">
-              Show Overlay
-            </button>
-            <button id="hide-native-overlay-button" title="Hide native overlay">
-              Hide Overlay
             </button>
             <button id="new-chat-button" title="New Chat">New Chat</button>
             <button id="toggle-settings-button" title="Settings">

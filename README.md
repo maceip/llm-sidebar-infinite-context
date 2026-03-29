@@ -90,45 +90,111 @@ This Chrome Extension allows you to interact with Gemini models in a sidebar, us
 
 ### Prerequisites
 
-- Node.js (v20+)
+- Node.js (v22+)
 - npm
+- Rust toolchain (for native components)
+- Linux: `libxkbcommon-dev libwayland-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libgl-dev libegl-dev` (for GUI installer)
 
-### Commands
+### Building Everything
 
-| Command                         | Description                                 |
-| :------------------------------ | :------------------------------------------ |
-| `npm run build`                 | Builds the extension to `dist/`             |
+```bash
+# 1. Chrome extension
+npm install
+npm run build          # -> dist/
+
+# 2. Native components
+npm run build:native
+
+# 3. Package installer bundle (extension + native + dev CRX)
+npm run build:package
+```
+
+### Running & Testing
+
+```bash
+# Run extension tests
+npm test
+
+# Type-check TypeScript
+npm run type-check
+
+# Run the native/browser harness
+npm run test:native-companion
+
+# Run the installer path
+npm run installer:install
+npm run installer:uninstall
+```
+
+### Loading the Extension in Chrome
+
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked** -> select the `dist/` folder
+4. Open sidebar: click the extension icon or press `Ctrl+Shift+S`
+
+### Installing Native Components
+
+The npm-wired installer path is:
+
+```bash
+npm run build:package
+npm run installer:install
+```
+
+This stages a bundle in `dist-installer/` containing:
+- `llm-sidebar-installer`
+- `overlay-companion`
+- `llm-sidebar.crx`
+- `llm-sidebar-extension-id.txt`
+
+For production CRX packaging, provide `CRX_PRIVATE_KEY`. The default npm packaging path uses a reusable local development key.
+
+### Commands Reference
+
+| Command                         | Description                                     |
+| :------------------------------ | :---------------------------------------------- |
+| `npm run build`                 | Builds the extension to `dist/`                 |
 | `npm run build:native`          | Builds the Rust host, installer, and overlay companion |
 | `npm run build:package`         | Builds extension, native binaries, CRX, and staged installer assets |
 | `npm run installer:install`     | Builds package artifacts and runs the Rust installer |
 | `npm run installer:uninstall`   | Runs the Rust installer uninstall flow      |
-| `npm test`                      | Runs unit tests with Vitest                 |
-| `npm run lint`                  | Runs ESLint                                 |
-| `npm run format`                | Formats code with Prettier                  |
-| `npm run type-check`            | Runs TypeScript type checking               |
-| `npm run test:native-companion` | Runs the Puppeteer/native companion harness |
+| `npm test`                      | Runs unit tests with Vitest                     |
+| `npm run lint`                  | Runs ESLint                                     |
+| `npm run format`                | Formats code with Prettier                      |
+| `npm run type-check`            | Runs TypeScript type checking                   |
+| `npm run pack-crx`              | Packs extension as signed CRX3                  |
+| `npm run test:native-companion` | Runs the Puppeteer/native companion harness     |
 
-### Installer machinery
+### Project Structure
 
-A Rust installer now exists under `native/installer/` and is wired into npm. The supported path is:
+```
+├── src/                    # Chrome extension (TypeScript)
+│   ├── pages/              # sidebar.html, welcome.html, etc.
+│   ├── scripts/            # controllers, services, memory pipeline, native bridge
+│   └── styles/             # sidebar.css
+├── native/                 # Rust native components
+│   ├── host/               # Native messaging host (legacy/simple host)
+│   ├── installer/          # Installer CLI / diagnostics / browser registration
+│   └── overlay-companion/  # Overlay daemon + native messaging bridge foundation
+├── build-scripts/          # build, pack, and installer staging scripts
+└── test-harness/           # Puppeteer native companion test harness
+```
 
-1. `npm run build:package` to build the extension, native host, installer, and a dev CRX, then stage everything into `dist-installer/`
-2. `npm run installer:install` to run the installer from the staged bundle
-3. `npm run installer:uninstall` to remove the installed native host / extension registration
+### Native Companion Architecture
 
-`build:package` uses a generated development key by default (`pack-crx:dev`) so the npm path works without extra setup. For production packaging, use `CRX_PRIVATE_KEY` or `node build-scripts/pack-crx.js --key <pem>`.
-
-The installer expects the packaged CRX and `llm-sidebar-host` binary to be staged next to `llm-sidebar-installer` in `dist-installer/`.
-
-### Native companion foundation
-
-This repository now includes a Rust-based native companion foundation under `native/overlay-companion/` plus a Puppeteer harness under `test-harness/native-companion/`.
+```
+Chrome Extension
+    ↓ native messaging (stdio JSON frames)
+overlay-companion host bridge
+    ↓ local IPC JSON-RPC
+overlay-companion daemon
+    → overlay/HUD target on macOS and Windows
+```
 
 The native companion is designed around a durable daemon + native-messaging bridge split so the long-lived process can tolerate Chrome MV3 service-worker restarts and reconnect cleanly using JSON-RPC `hello`, `ping`, and `status` messages.
 
-The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, launches Chrome headless with the unpacked extension, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
-
-Cross-platform note: the harness now resolves `npm.cmd` / `cargo.exe` correctly on Windows, but the fully automated native messaging registration path is currently validated end-to-end on Linux. Windows still needs registry-based native host registration before the full harness can be considered production-ready there.
+The harness builds the extension, builds the Rust binary, registers native messaging manifests in an isolated browser home, verifies a browser-run memory-layer scenario through the real extension storage/API surface, and verifies native companion connectivity through a real heartbeat/pong cycle.
 
 ### Environment Variables
 

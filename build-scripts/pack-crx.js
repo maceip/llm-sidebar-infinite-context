@@ -13,11 +13,13 @@
 const nodeCrypto = require('node:crypto');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const yazl = require('yazl');
 
 const projectRoot = path.resolve(__dirname, '..');
 const distDir = path.join(projectRoot, 'dist');
 const outCrx = path.join(distDir, 'llm-sidebar.crx');
+const outExtensionId = path.join(distDir, 'llm-sidebar-extension-id.txt');
+const defaultDevKeyPath = path.join(projectRoot, 'extension.pem');
 
 function getPrivateKey() {
   // From command line
@@ -38,22 +40,43 @@ function getPrivateKey() {
     return decoded;
   }
 
+  if (fs.existsSync(defaultDevKeyPath)) {
+    return fs.readFileSync(defaultDevKeyPath, 'utf-8');
+  }
+
   return null;
 }
 
-function createZip(sourceDir) {
-  const zipPath = path.join(projectRoot, 'dist-ext.zip');
-  // Remove old zip
-  if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
+async function createZip(sourceDir) {
+  const zipfile = new yazl.ZipFile();
 
-  // We need to zip the contents of dist/, not the dist/ dir itself
-  execSync(`cd "${sourceDir}" && zip -r "${zipPath}" . -x "*.crx" "*.zip"`, {
-    stdio: 'pipe',
+  function addDirectory(currentDir, relativeDir = '') {
+    for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+      const absPath = path.join(currentDir, entry.name);
+      const relPath = relativeDir
+        ? path.posix.join(relativeDir, entry.name)
+        : entry.name;
+
+      if (entry.isDirectory()) {
+        addDirectory(absPath, relPath);
+      } else if (entry.isFile()) {
+        if (relPath.endsWith('.crx') || relPath.endsWith('.zip')) {
+          continue;
+        }
+        zipfile.addFile(absPath, relPath);
+      }
+    }
+  }
+
+  addDirectory(sourceDir);
+  zipfile.end();
+
+  return await new Promise((resolve, reject) => {
+    const chunks = [];
+    zipfile.outputStream.on('data', (chunk) => chunks.push(chunk));
+    zipfile.outputStream.on('end', () => resolve(Buffer.concat(chunks)));
+    zipfile.outputStream.on('error', reject);
   });
-
-  const zipBuf = fs.readFileSync(zipPath);
-  fs.unlinkSync(zipPath);
-  return zipBuf;
 }
 
 /**
@@ -176,10 +199,9 @@ async function main() {
     if (process.argv.includes('--generate-key')) {
       console.log('Generating new RSA key pair...');
       pemKey = generateKey();
-      const keyPath = path.join(projectRoot, 'extension.pem');
-      fs.writeFileSync(keyPath, pemKey);
+      fs.writeFileSync(defaultDevKeyPath, pemKey);
       console.log(
-        `Key saved to ${keyPath} — add base64 of this to CRX_PRIVATE_KEY secret`,
+        `Key saved to ${defaultDevKeyPath} — add base64 of this to CRX_PRIVATE_KEY secret`,
       );
     } else {
       console.error('Error: No private key provided.');
@@ -192,7 +214,7 @@ async function main() {
   }
 
   console.log('Creating zip of dist/...');
-  const zipBuf = createZip(distDir);
+  const zipBuf = await createZip(distDir);
 
   console.log('Packing CRX3...');
   const crxBuf = packCrx3(zipBuf, pemKey);
@@ -213,7 +235,10 @@ async function main() {
       return String.fromCharCode(97 + hi) + String.fromCharCode(97 + lo);
     })
     .join('');
+  fs.writeFileSync(outExtensionId, `${extensionId}
+`);
   console.log(`Extension ID: ${extensionId}`);
+  console.log(`Extension ID metadata written to ${outExtensionId}`);
 }
 
 main().catch((err) => {

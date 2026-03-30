@@ -121,9 +121,13 @@ describe('BackgroundController', () => {
         hostName: 'com.maceip.native_overlay_companion',
         diagnostics: [],
         overlayStatus: 'running',
+        overlayVisible: false,
         serviceStatus: 'ready',
         supportedFeatures: ['overlay'],
       }),
+      showOverlay: vi.fn().mockResolvedValue({ success: true }),
+      hideOverlay: vi.fn().mockResolvedValue({ success: true }),
+      toggleOverlay: vi.fn().mockResolvedValue({ success: true }),
     } as unknown as NativeCompanionService;
 
     controller = new BackgroundController(
@@ -798,10 +802,39 @@ describe('BackgroundController', () => {
           hostName: 'com.maceip.native_overlay_companion',
           diagnostics: [],
           overlayStatus: 'running',
+          overlayVisible: false,
           serviceStatus: 'ready',
           supportedFeatures: ['overlay'],
         },
       });
+    });
+
+
+    it('should forward show native overlay to the native companion service', async () => {
+      const response = await controller.handleMessage({
+        type: MessageTypes.SHOW_NATIVE_OVERLAY,
+      });
+
+      expect(mockNativeCompanionService.showOverlay).toHaveBeenCalled();
+      expect(response).toEqual({ success: true });
+    });
+
+    it('should forward hide native overlay to the native companion service', async () => {
+      const response = await controller.handleMessage({
+        type: MessageTypes.HIDE_NATIVE_OVERLAY,
+      });
+
+      expect(mockNativeCompanionService.hideOverlay).toHaveBeenCalled();
+      expect(response).toEqual({ success: true });
+    });
+
+    it('should forward toggle native overlay to the native companion service', async () => {
+      const response = await controller.handleMessage({
+        type: MessageTypes.TOGGLE_NATIVE_OVERLAY,
+      });
+
+      expect(mockNativeCompanionService.toggleOverlay).toHaveBeenCalled();
+      expect(response).toEqual({ success: true });
     });
 
     it('should handle SAVE_API_KEY correctly', async () => {

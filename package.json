@@ -6,12 +6,22 @@
   "scripts": {
     "test": "vitest run",
     "build": "node build-scripts/build.js",
+    "build:extension": "node build-scripts/build.js",
+    "build:native:host": "cargo +stable build --manifest-path native/host/Cargo.toml",
+    "build:native:installer": "cargo +stable build --manifest-path native/installer/Cargo.toml",
+    "build:native:overlay": "cargo +stable build --manifest-path native/overlay-companion/Cargo.toml",
+    "build:native": "npm run build:native:host && npm run build:native:installer && npm run build:native:overlay",
+    "build:package": "npm run build:extension && npm run build:native && npm run pack-crx:dev && node build-scripts/prepare-installer-assets.js",
+    "installer:prepare": "npm run build:package",
+    "installer:install": "npm run build:package && node build-scripts/run-installer.js install",
+    "installer:uninstall": "node build-scripts/run-installer.js uninstall",
     "type-check": "tsc",
     "test:native-companion": "node test-harness/native-companion/run-harness.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "pack-crx": "node build-scripts/pack-crx.js",
+    "pack-crx:dev": "node build-scripts/pack-crx.js --generate-key",
     "prepare": "husky"
   },
   "repository": {
@@ -48,6 +58,7 @@
     "puppeteer": "^24.40.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "yazl": "^3.3.1"
   }
 }

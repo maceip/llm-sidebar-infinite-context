@@ -55,6 +55,7 @@ function createInitialState(): NativeCompanionState {
     hostName: NATIVE_COMPANION_HOST_NAME,
     diagnostics: [],
     overlayStatus: 'starting',
+    overlayVisible: false,
     serviceStatus: 'starting',
     supportedFeatures: [],
   };
@@ -135,6 +136,7 @@ export class NativeCompanionService {
     this.state.hostName = saved.hostName || NATIVE_COMPANION_HOST_NAME;
     this.state.transport = 'native-messaging';
     this.state.overlayStatus = saved.overlayStatus || 'starting';
+    this.state.overlayVisible = saved.overlayVisible || false;
     this.state.serviceStatus = saved.serviceStatus || 'starting';
     this.state.supportedFeatures = saved.supportedFeatures || [];
     this.state.diagnostics = saved.diagnostics || [];
@@ -191,6 +193,7 @@ export class NativeCompanionService {
     this.state.nativeSessionId = result.nativeSessionId;
     this.state.lastHelloAt = Date.now();
     this.state.overlayStatus = result.overlayStatus;
+    this.state.overlayVisible = false;
     this.state.supportedFeatures = result.supportedFeatures;
     this.pushDiagnostic(
       `hello ok native=${result.nativeSessionId} overlay=${result.overlayStatus}`,
@@ -203,8 +206,43 @@ export class NativeCompanionService {
     this.state.nativeSessionId = result.nativeSessionId;
     this.state.overlayStatus = result.overlayStatus;
     this.state.serviceStatus = result.service;
+    this.state.overlayStatus = result.overlayStatus;
+    this.state.overlayVisible = false;
     this.state.supportedFeatures = result.supportedFeatures;
     await this.persistState();
+  }
+
+  async showOverlay(): Promise<{ success: boolean; message?: string }> {
+    try {
+      await this.call<NativeStatusResult>('overlay.show');
+      await this.fetchStatus();
+      return { success: true, message: 'Overlay shown' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, message };
+    }
+  }
+
+  async hideOverlay(): Promise<{ success: boolean; message?: string }> {
+    try {
+      await this.call<NativeStatusResult>('overlay.hide');
+      await this.fetchStatus();
+      return { success: true, message: 'Overlay hidden' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, message };
+    }
+  }
+
+  async toggleOverlay(): Promise<{ success: boolean; message?: string }> {
+    try {
+      await this.call<NativeStatusResult>('overlay.toggle');
+      await this.fetchStatus();
+      return { success: true, message: 'Overlay toggled' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, message };
+    }
   }
 
   private startHeartbeatLoop() {

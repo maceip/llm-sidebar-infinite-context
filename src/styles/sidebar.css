@@ -563,9 +563,18 @@ body {
   color: var(--warning, #f5a623);
 }
 
+.companion-dot.bridge-only {
+  color: var(--accent-primary, #5b8def);
+}
+
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* --- Bottom Panel --- */
@@ -760,7 +769,9 @@ body {
 
 #toggle-settings-button,
 #new-chat-button,
-#save-api-key-button {
+#save-api-key-button,
+#show-native-overlay-button,
+#hide-native-overlay-button {
   background-color: var(--bg-alt);
   color: var(--text-primary);
   border: 1px solid var(--border-main);
@@ -773,7 +784,9 @@ body {
 }
 
 #toggle-settings-button:hover,
-#new-chat-button:hover {
+#new-chat-button:hover,
+#show-native-overlay-button:hover,
+#hide-native-overlay-button:hover {
   background-color: var(--bg-hover);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
@@ -1479,6 +1492,14 @@ body {
 .message.model th {
   background: var(--bg-alt);
   font-weight: 600;
+}
+
+#show-native-overlay-button:disabled,
+#hide-native-overlay-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--border-light);
+  color: var(--text-muted);
 }
 
 /* --- Context Pulse: Inline Context Ribbon --- */

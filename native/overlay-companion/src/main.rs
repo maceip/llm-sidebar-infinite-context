@@ -11,6 +11,7 @@ use std::fs;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const HOST_NAME: &str = "com.maceip.native_overlay_companion";
@@ -146,6 +147,23 @@ fn platform_name() -> String {
         "macos" => "macos".to_string(),
         "windows" => "windows".to_string(),
         other => other.to_string(),
+    }
+}
+
+
+static OVERLAY_VISIBLE: OnceLock<Mutex<bool>> = OnceLock::new();
+
+fn overlay_visible_state() -> &'static Mutex<bool> {
+    OVERLAY_VISIBLE.get_or_init(|| Mutex::new(false))
+}
+
+fn current_overlay_visible() -> bool {
+    *overlay_visible_state().lock().expect("overlay visible lock poisoned")
+}
+
+fn set_overlay_visible(visible: bool) {
+    if let Ok(mut guard) = overlay_visible_state().lock() {
+        *guard = visible;
     }
 }
 
@@ -460,8 +478,72 @@ fn daemon_dispatch(request: RpcRequest, state: &mut DaemonState) -> Value {
                 "restartCount": state.restart_count,
                 "platform": state.platform,
                 "supportedFeatures": state.supported_features,
+                "visible": current_overlay_visible(),
             }),
         ),
+        "overlay.show" => {
+            if !matches!(env::consts::OS, "macos" | "windows") {
+                rpc_failure(request.id, -32010, "overlay is not supported on this platform")
+            } else {
+                set_overlay_visible(true);
+                state.overlay_status = overlay_status();
+                rpc_success(
+                    request.id.unwrap_or_else(session_id),
+                    json!({
+                        "service": state.service_status,
+                        "overlayStatus": state.overlay_status,
+                        "transport": "ipc",
+                        "nativeSessionId": state.native_session_id,
+                        "restartCount": state.restart_count,
+                        "platform": state.platform,
+                        "supportedFeatures": state.supported_features,
+                        "visible": current_overlay_visible(),
+                    }),
+                )
+            }
+        }
+        "overlay.hide" => {
+            if !matches!(env::consts::OS, "macos" | "windows") {
+                rpc_failure(request.id, -32010, "overlay is not supported on this platform")
+            } else {
+                set_overlay_visible(false);
+                state.overlay_status = overlay_status();
+                rpc_success(
+                    request.id.unwrap_or_else(session_id),
+                    json!({
+                        "service": state.service_status,
+                        "overlayStatus": state.overlay_status,
+                        "transport": "ipc",
+                        "nativeSessionId": state.native_session_id,
+                        "restartCount": state.restart_count,
+                        "platform": state.platform,
+                        "supportedFeatures": state.supported_features,
+                        "visible": current_overlay_visible(),
+                    }),
+                )
+            }
+        }
+        "overlay.toggle" => {
+            if !matches!(env::consts::OS, "macos" | "windows") {
+                rpc_failure(request.id, -32010, "overlay is not supported on this platform")
+            } else {
+                set_overlay_visible(!current_overlay_visible());
+                state.overlay_status = overlay_status();
+                rpc_success(
+                    request.id.unwrap_or_else(session_id),
+                    json!({
+                        "service": state.service_status,
+                        "overlayStatus": state.overlay_status,
+                        "transport": "ipc",
+                        "nativeSessionId": state.native_session_id,
+                        "restartCount": state.restart_count,
+                        "platform": state.platform,
+                        "supportedFeatures": state.supported_features,
+                        "visible": current_overlay_visible(),
+                    }),
+                )
+            }
+        }
         other => rpc_failure(
             request.id,
             -32601,
@@ -516,7 +598,7 @@ fn ensure_daemon_running(paths: &AppPaths) -> Result<()> {
 fn run_host() -> Result<()> {
     let paths = AppPaths::discover()?;
     let extension_id = env::var("OVERLAY_EXTENSION_ID")
-        .unwrap_or_else(|_| "nnhnfinhcolokbaecbidapfdkbibfoca".to_string());
+        .unwrap_or_else(|_| "hecgmgkofmopdcjlbaegcaanaadhomhb".to_string());
     ensure_assets(&paths, &extension_id)?;
     ensure_daemon_running(&paths)?;
 
@@ -544,7 +626,7 @@ fn run_host() -> Result<()> {
 fn run_daemon() -> Result<()> {
     let paths = AppPaths::discover()?;
     let extension_id = env::var("OVERLAY_EXTENSION_ID")
-        .unwrap_or_else(|_| "nnhnfinhcolokbaecbidapfdkbibfoca".to_string());
+        .unwrap_or_else(|_| "hecgmgkofmopdcjlbaegcaanaadhomhb".to_string());
     ensure_assets(&paths, &extension_id)?;
 
     let mut state = load_state(&paths)?;
@@ -604,7 +686,7 @@ fn handle_daemon_connection(
 fn install_assets() -> Result<()> {
     let paths = AppPaths::discover()?;
     let extension_id = env::var("OVERLAY_EXTENSION_ID")
-        .unwrap_or_else(|_| "nnhnfinhcolokbaecbidapfdkbibfoca".to_string());
+        .unwrap_or_else(|_| "hecgmgkofmopdcjlbaegcaanaadhomhb".to_string());
     ensure_assets(&paths, &extension_id)?;
     for manifest_path in &paths.native_host_manifest_paths {
         println!("native host manifest: {}", manifest_path.display());
@@ -688,6 +770,7 @@ mod overlay {
         fn create_window(&mut self, event_loop: &ActiveEventLoop) -> Result<()> {
             let window = Arc::new(event_loop.create_window(Self::attributes())?);
             window.set_cursor_hittest(false)?;
+            window.set_visible(current_overlay_visible());
             #[cfg(target_os = "windows")]
             {
                 use winit::platform::windows::WindowExtWindows;
@@ -749,7 +832,14 @@ mod overlay {
                 }
             }
             if let Some(window) = &self.window {
+                window.set_visible(current_overlay_visible());
                 window.request_redraw();
+            }
+        }
+
+        fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+            if let Some(window) = &self.window {
+                window.set_visible(current_overlay_visible());
             }
         }
 

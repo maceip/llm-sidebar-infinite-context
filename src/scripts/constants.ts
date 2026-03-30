@@ -136,7 +136,8 @@ export const MIN_PER_TAB_BUDGET = 2000;
  */
 export const SUMMARY_TARGET_LENGTH = 5000;
 
-export const NATIVE_COMPANION_HOST_NAME = 'com.maceip.native_overlay_companion';
+export const NATIVE_COMPANION_HOST_NAME =
+  'com.maceip.native_overlay_companion';
 export const NATIVE_COMPANION_HEARTBEAT_INTERVAL_MS = 22000;
 export const NATIVE_COMPANION_RECONNECT_ALARM = 'nativeCompanionReconnect';
 export const NATIVE_COMPANION_REQUEST_TIMEOUT_MS = 10000;
@@ -159,6 +160,9 @@ export const MessageTypes = {
   GET_CURRENT_TAB: 'getCurrentTab',
   GET_CONTEXT_SNAPSHOT: 'getContextSnapshot',
   NATIVE_COMPANION_STATUS: 'nativeCompanionStatus',
+  SHOW_NATIVE_OVERLAY: 'showNativeOverlay',
+  HIDE_NATIVE_OVERLAY: 'hideNativeOverlay',
+  TOGGLE_NATIVE_OVERLAY: 'toggleNativeOverlay',
 } as const;
 
 export const StorageKeys = {

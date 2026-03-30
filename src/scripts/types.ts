@@ -116,6 +116,18 @@ export interface NativeCompanionStatusRequest {
   type: typeof MessageTypes.NATIVE_COMPANION_STATUS;
 }
 
+export interface ShowNativeOverlayRequest {
+  type: typeof MessageTypes.SHOW_NATIVE_OVERLAY;
+}
+
+export interface HideNativeOverlayRequest {
+  type: typeof MessageTypes.HIDE_NATIVE_OVERLAY;
+}
+
+export interface ToggleNativeOverlayRequest {
+  type: typeof MessageTypes.TOGGLE_NATIVE_OVERLAY;
+}
+
 export interface MemoryEpisodeSummary {
   id: string;
   kind: 'turn' | 'summary';
@@ -160,6 +172,7 @@ export interface NativeCompanionState {
   hostName: string;
   diagnostics: string[];
   overlayStatus: NativeOverlayStatus;
+  overlayVisible?: boolean;
   serviceStatus: NativeServiceStatus;
   supportedFeatures: string[];
 }
@@ -167,6 +180,12 @@ export interface NativeCompanionState {
 export interface NativeCompanionStatusResponse {
   success: boolean;
   state: NativeCompanionState;
+}
+
+export interface NativeCompanionIndicatorModel {
+  label: string;
+  title: string;
+  dotClass: NativeCompanionConnectionState;
 }
 
 export interface JsonRpcRequest<TParams = Record<string, unknown> | undefined> {
@@ -243,6 +262,7 @@ export interface NativeStatusResult {
   restartCount: number;
   platform: string;
   supportedFeatures: string[];
+  visible?: boolean;
 }
 
 export interface NativeEventParams {
@@ -277,7 +297,10 @@ export type ExtensionMessage =
   | GetMemoryStatsRequest
   | GetCurrentTabRequest
   | GetContextSnapshotRequest
-  | NativeCompanionStatusRequest;
+  | NativeCompanionStatusRequest
+  | ShowNativeOverlayRequest
+  | HideNativeOverlayRequest
+  | ToggleNativeOverlayRequest;
 
 export interface RetrievalSnapshotEpisode {
   id: string;

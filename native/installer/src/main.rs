@@ -19,7 +19,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub const HOST_NAME: &str = "com.llm_sidebar.native_host";
+pub const HOST_NAME: &str = "com.maceip.native_overlay_companion";
 pub const DEFAULT_EXTENSION_ID: &str = "hecgmgkofmopdcjlbaegcaanaadhomhb";
 
 fn main() {
@@ -39,7 +39,8 @@ fn main() {
                 eprintln!("Install failed: {e}");
                 std::process::exit(1);
             }
-            println!("\nInstallation complete.");
+            println!("
+Installation complete.");
         }
         "uninstall" => {
             if let Err(e) = uninstall() {
@@ -73,13 +74,11 @@ fn main() {
 #[cfg(feature = "gui")]
 mod gui;
 
-// ── Shared helpers ─────────────────────────────────────────────────────
-
 pub fn install_dir() -> PathBuf {
     if cfg!(windows) {
         let local_app = env::var("LOCALAPPDATA").unwrap_or_else(|_| {
             let home = env::var("USERPROFILE").expect("USERPROFILE not set");
-            format!("{home}\\AppData\\Local")
+            format!(r"{home}\AppData\Local")
         });
         PathBuf::from(local_app).join("LLMSidebar")
     } else {
@@ -90,9 +89,9 @@ pub fn install_dir() -> PathBuf {
 
 pub fn host_binary_name() -> &'static str {
     if cfg!(windows) {
-        "llm-sidebar-host.exe"
+        "overlay-companion.exe"
     } else {
-        "llm-sidebar-host"
+        "overlay-companion"
     }
 }
 
@@ -104,21 +103,19 @@ pub fn overlay_binary_name() -> &'static str {
     }
 }
 
-/// Find a binary adjacent to the installer, or in a known relative path.
 pub fn find_adjacent_binary(name: &str) -> Option<PathBuf> {
     let exe = env::current_exe().ok()?;
     let dir = exe.parent()?;
 
-    let candidate = dir.join(name);
-    if candidate.exists() {
-        return Some(candidate);
-    }
-    // Check parent dir (workspace build layout)
-    let candidate = dir.join("..").join(name);
-    if candidate.exists() {
-        return Some(candidate);
-    }
-    None
+    let candidates = [
+        dir.join(name),
+        dir.join(".").join(name),
+        dir.join("..").join(name),
+        dir.join("..").join("overlay-companion").join(name),
+        dir.join("..").join("overlay-companion").join("target").join("debug").join(name),
+    ];
+
+    candidates.into_iter().find(|candidate| candidate.exists())
 }
 
 pub fn find_crx() -> Option<PathBuf> {
@@ -134,33 +131,32 @@ pub fn find_crx() -> Option<PathBuf> {
     None
 }
 
-// ── Install ────────────────────────────────────────────────────────────
-
 pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::Error>> {
     let dest_dir = install_dir();
     fs::create_dir_all(&dest_dir)?;
 
     let mut report = InstallReport::default();
 
-    // 1. Copy native host binary
     let host_src = find_adjacent_binary(host_binary_name())
-        .ok_or("Cannot find llm-sidebar-host binary next to installer")?;
+        .ok_or("Cannot find overlay-companion binary next to installer")?;
     let host_dest = dest_dir.join(host_binary_name());
-    println!("  Copying native host to {}", host_dest.display());
+    println!("  Copying native companion host to {}", host_dest.display());
     fs::copy(&host_src, &host_dest)?;
     set_executable(&host_dest);
     report.host_installed = true;
+    report.overlay_installed = true;
 
-    // 2. Copy overlay companion if present
     if let Some(overlay_src) = find_adjacent_binary(overlay_binary_name()) {
         let overlay_dest = dest_dir.join(overlay_binary_name());
-        println!("  Copying overlay companion to {}", overlay_dest.display());
-        fs::copy(&overlay_src, &overlay_dest)?;
-        set_executable(&overlay_dest);
+        if overlay_src != overlay_dest {
+            println!("  Copying overlay companion to {}", overlay_dest.display());
+            fs::copy(&overlay_src, &overlay_dest)?;
+            set_executable(&overlay_dest);
+        }
         report.overlay_installed = true;
     }
 
-    // 3. Detect browsers and register native messaging host for each
+    // 2. Detect browsers and register native messaging host for each
     let detected = browsers::detect_browsers();
     if detected.is_empty() {
         println!("  WARNING: No Chromium-based browsers detected.");
@@ -168,12 +164,10 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
 
     let manifest = serde_json::json!({
         "name": HOST_NAME,
-        "description": "Native messaging host for LLM Sidebar Chrome extension",
+        "description": "Native overlay companion host for LLM Sidebar Chrome extension",
         "path": host_dest.to_string_lossy(),
         "type": "stdio",
-        "allowed_origins": [
-            format!("chrome-extension://{extension_id}/")
-        ]
+        "allowed_origins": [format!("chrome-extension://{extension_id}/")]
     });
     let manifest_json = serde_json::to_string_pretty(&manifest)?;
 
@@ -190,7 +184,7 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
         }
     }
 
-    // 4. Install CRX if present
+    // 3. Install CRX if present
     if let Some(crx_path) = find_crx() {
         install_crx(&crx_path, extension_id, &dest_dir)?;
         report.crx_installed = true;
@@ -203,8 +197,6 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
 
 pub fn uninstall() -> Result<(), Box<dyn std::error::Error>> {
     let dest_dir = install_dir();
-
-    // Unregister from all detected browsers
     let detected = browsers::detect_browsers();
     for browser in &detected {
         if let Err(e) = browsers::unregister_native_host(browser) {
@@ -231,22 +223,19 @@ pub struct InstallReport {
     pub browser_errors: Vec<(String, String)>,
 }
 
-fn set_executable(_path: &Path) {
+fn set_executable(path: &Path) {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let _ = fs::set_permissions(_path, fs::Permissions::from_mode(0o755));
+        let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o755));
     }
 }
-
-// ── CRX installation (external extension mechanism) ────────────────────
 
 #[cfg(unix)]
 fn install_crx(crx_path: &Path, extension_id: &str, dest_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let crx_dest = dest_dir.join("llm-sidebar.crx");
     fs::copy(crx_path, &crx_dest)?;
 
-    // Use the first detected browser's external extension dir
     let ext_dir = if cfg!(target_os = "macos") {
         let home = env::var("HOME")?;
         PathBuf::from(home).join("Library/Application Support/Google/Chrome/External Extensions")
@@ -275,10 +264,10 @@ fn install_crx(crx_path: &Path, extension_id: &str, dest_dir: &Path) -> Result<(
     use winreg::RegKey;
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let path = format!("Software\\Google\\Chrome\\Extensions\\{extension_id}");
+    let path = format!(r"Software\Google\Chrome\Extensions\{extension_id}");
     let (key, _) = hkcu.create_subkey(&path)?;
     key.set_value("path", &crx_dest.to_string_lossy().to_string())?;
     key.set_value("version", &"1.0")?;
-    println!("  Registered external extension in HKCU\\{path}");
+    println!(r"  Registered external extension in HKCU\{path}");
     Ok(())
 }

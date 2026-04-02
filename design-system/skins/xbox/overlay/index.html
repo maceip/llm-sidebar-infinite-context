@@ -2,15 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Context_OS — Xbox Overlay</title>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
+      * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
         background: transparent;
         overflow: hidden;
@@ -18,320 +12,277 @@
         -webkit-font-smoothing: antialiased;
         user-select: none;
       }
-
-      .skin-root {
-        position: relative;
-        width: 350px;
-        height: 216px;
-      }
-
-      /* Main skin shape — the background image IS the shape */
+      .skin-root { position: relative; width: 350px; height: 216px; }
       .skin-bg {
-        position: absolute;
-        inset: 0;
+        position: absolute; inset: 0;
         background: url('../main.png') no-repeat center center;
         background-size: contain;
-        z-index: 1;
-        pointer-events: none;
+        z-index: 10; pointer-events: none;
       }
 
-      /* Screen area — maps to the oval display on the Xbox skin */
+      /* Screen area — oval display */
       .screen-area {
-        position: absolute;
-        left: 127px;
-        top: 50px;
-        width: 185px;
-        height: 72px;
-        z-index: 0;
-        overflow: hidden;
-        border-radius: 4px;
+        position: absolute; left: 127px; top: 50px;
+        width: 185px; height: 72px; z-index: 5;
+        overflow: hidden; border-radius: 4px;
         background: url('../screen_back_blur.jpg') no-repeat center center;
         background-size: cover;
       }
-
       .screen-content {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+        width: 100%; height: 100%;
+        display: flex; flex-direction: column;
         justify-content: space-between;
         padding: 6px 10px;
-        z-index: 2;
       }
-
       .screen-title {
-        font-size: 7px;
-        font-weight: 900;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: #63e900;
-        text-shadow: 0 0 8px rgba(99, 233, 0, 0.5);
+        font-size: 7px; font-weight: 900;
+        letter-spacing: 0.15em; text-transform: uppercase;
+        color: #63e900; text-shadow: 0 0 8px rgba(99,233,0,0.5);
       }
-
       .screen-metric {
-        font-size: 18px;
-        font-weight: 900;
-        color: #63e900;
-        text-shadow: 0 0 12px rgba(99, 233, 0, 0.6);
-        letter-spacing: -0.02em;
-        line-height: 1;
+        font-size: 18px; font-weight: 900;
+        color: #63e900; text-shadow: 0 0 12px rgba(99,233,0,0.6);
+        letter-spacing: -0.02em; line-height: 1;
       }
-
       .screen-label {
-        font-size: 6px;
-        font-weight: 700;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: #63e900;
-        opacity: 0.7;
+        font-size: 6px; font-weight: 700;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        color: #63e900; opacity: 0.7;
       }
-
-      .screen-bar-row {
-        display: flex;
-        gap: 2px;
-        align-items: flex-end;
-        height: 14px;
-      }
-
+      .screen-bar-row { display: flex; gap: 2px; align-items: flex-end; height: 14px; }
       .screen-bar {
-        width: 4px;
-        background: #63e900;
-        box-shadow: 0 0 4px rgba(99, 233, 0, 0.4);
+        width: 4px; background: #63e900;
+        box-shadow: 0 0 4px rgba(99,233,0,0.4);
         transition: height 0.4s ease;
       }
-
-      /* Info area — bottom left, next to X button */
-      .info-area {
-        position: absolute;
-        left: 127px;
-        top: 127px;
-        width: 185px;
-        height: 34px;
-        z-index: 0;
-        display: flex;
-        align-items: center;
-        padding: 0 8px;
-        gap: 6px;
+      .screen-secondary {
+        font-size: 6px; font-weight: 700; color: #63e900; opacity: 0.5;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 165px;
       }
 
-      .info-pip {
-        width: 4px;
-        height: 4px;
-        flex-shrink: 0;
-      }
-
-      .info-text {
-        font-size: 6px;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #adaaaa;
-      }
-
-      .info-value {
-        color: #63e900;
-        text-shadow: 0 0 4px rgba(99, 233, 0, 0.3);
-      }
-
-      /* Status readout below transport controls */
-      .status-strip {
-        position: absolute;
-        left: 40px;
-        top: 200px;
-        width: 270px;
-        height: 10px;
-        z-index: 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 4px;
-      }
-
-      .status-text {
-        font-size: 5px;
-        font-weight: 800;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: #484848;
-      }
-
-      /* X button glow overlay */
-      .x-glow {
-        position: absolute;
-        left: 37px;
-        top: 99px;
-        width: 50px;
-        height: 50px;
-        z-index: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .x-pulse {
-        width: 20px;
-        height: 20px;
-        background: #63e900;
-        box-shadow:
-          0 0 20px rgba(99, 233, 0, 0.6),
-          0 0 40px rgba(99, 233, 0, 0.2);
-        animation: pulse 2s ease-in-out infinite;
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 0.4;
-          transform: scale(0.8);
-        }
-        50% {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-
-      @keyframes scroll {
-        0% {
-          transform: translateX(0);
-        }
-        100% {
-          transform: translateX(-50%);
-        }
-      }
-
+      /* Scrolling text strip at bottom of screen */
+      .scroll-container { overflow: hidden; width: 165px; }
       .scroll-text {
-        display: inline-block;
-        white-space: nowrap;
-        animation: scroll 8s linear infinite;
+        display: inline-block; white-space: nowrap;
+        animation: scroll 12s linear infinite;
+        font-size: 5.5px; font-weight: 700; color: #63e900;
+        opacity: 0.6; letter-spacing: 0.12em; text-transform: uppercase;
+      }
+      @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+      /* Info area — below screen */
+      .info-area {
+        position: absolute; left: 127px; top: 127px;
+        width: 185px; height: 34px; z-index: 5;
+        display: flex; align-items: center;
+        padding: 0 8px; gap: 6px;
+      }
+      .info-pip { width: 4px; height: 4px; flex-shrink: 0; }
+      .info-text {
+        font-size: 6px; font-weight: 700;
+        letter-spacing: 0.12em; text-transform: uppercase; color: #adaaaa;
+      }
+      .info-value { color: #63e900; text-shadow: 0 0 4px rgba(99,233,0,0.3); }
+
+      /* Status strip */
+      .status-strip {
+        position: absolute; left: 40px; top: 200px;
+        width: 270px; height: 10px; z-index: 5;
+        display: flex; justify-content: space-between;
+        align-items: center; padding: 0 4px;
+      }
+      .status-text {
+        font-size: 5px; font-weight: 800;
+        letter-spacing: 0.15em; text-transform: uppercase; color: #484848;
+      }
+
+      /* X button glow — clickable */
+      .x-glow {
+        position: absolute; left: 37px; top: 99px;
+        width: 50px; height: 50px; z-index: 15;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+      }
+      .x-pulse {
+        width: 20px; height: 20px; background: #63e900;
+        box-shadow: 0 0 20px rgba(99,233,0,0.6), 0 0 40px rgba(99,233,0,0.2);
+        animation: pulse 2s ease-in-out infinite;
+        transition: transform 0.1s;
+      }
+      .x-glow:active .x-pulse { transform: scale(0.7); }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.4; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+
+      /* Screen modes */
+      .screen-page { display: none; width: 100%; height: 100%; flex-direction: column; justify-content: space-between; padding: 6px 10px; }
+      .screen-page.active { display: flex; }
+
+      /* OCR text display */
+      .ocr-text {
+        font-size: 6px; font-weight: 600; color: #63e900;
+        opacity: 0.8; line-height: 1.4; overflow: hidden;
+        max-height: 48px; text-shadow: 0 0 3px rgba(99,233,0,0.3);
       }
     </style>
   </head>
   <body>
     <div class="skin-root" id="root">
-      <!-- X button glow -->
-      <div class="x-glow">
+      <!-- X button — cycles screen pages -->
+      <div class="x-glow" id="x-btn">
         <div class="x-pulse"></div>
       </div>
 
-      <!-- Main screen area -->
+      <!-- Screen area -->
       <div class="screen-area">
-        <div class="screen-content">
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-            "
-          >
+        <!-- Page 0: Memory stats -->
+        <div class="screen-page active" id="page-stats">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
             <div>
               <div class="screen-title">CONTEXT_OS</div>
               <div class="screen-metric" id="episode-count">0 / 160</div>
             </div>
-            <div style="text-align: right">
+            <div style="text-align:right">
               <div class="screen-label">MEMORY</div>
               <div class="screen-label" id="health-status">OFFLINE</div>
             </div>
           </div>
-          <div class="screen-bar-row" id="bar-chart">
-            <!-- filled by JS -->
+          <div class="screen-bar-row" id="bar-chart"></div>
+          <div class="scroll-container">
+            <span class="scroll-text" id="scroll-info">INITIALIZING...</span>
           </div>
-          <div style="overflow: hidden; width: 165px">
-            <div class="screen-label scroll-text" id="scroll-info">
-              SHORT-TERM: 0 &nbsp;&bull;&nbsp; RETRIEVER: -- &nbsp;&bull;&nbsp;
-              ASSEMBLER: -- &nbsp;&bull;&nbsp; SHORT-TERM: 0 &nbsp;&bull;&nbsp;
-              RETRIEVER: -- &nbsp;&bull;&nbsp; ASSEMBLER: -- &nbsp;&bull;&nbsp;
+        </div>
+
+        <!-- Page 1: Pipeline detail -->
+        <div class="screen-page" id="page-pipeline">
+          <div class="screen-title">PIPELINE</div>
+          <div style="display:flex;gap:12px;margin-top:4px">
+            <div>
+              <div class="screen-label">RETRIEVER</div>
+              <div class="screen-metric" style="font-size:12px" id="p-retriever">--</div>
+            </div>
+            <div>
+              <div class="screen-label">ASSEMBLER</div>
+              <div class="screen-metric" style="font-size:12px" id="p-assembler">--</div>
+            </div>
+            <div>
+              <div class="screen-label">PINNED</div>
+              <div class="screen-metric" style="font-size:12px" id="p-pinned">0</div>
             </div>
           </div>
+          <div class="screen-secondary" id="p-companion">COMPANION: N/A</div>
+        </div>
+
+        <!-- Page 2: Last captured text (OCR / input) -->
+        <div class="screen-page" id="page-capture">
+          <div class="screen-title">LAST CAPTURE</div>
+          <div class="ocr-text" id="capture-text">No captures yet</div>
+          <div class="screen-label" id="capture-meta"></div>
         </div>
       </div>
 
-      <!-- Info strip next to transport -->
+      <!-- Info strip -->
       <div class="info-area">
-        <div class="info-pip" style="background: #78b4fe"></div>
+        <div class="info-pip" style="background:#78b4fe"></div>
         <span class="info-text" id="pinned-info">0 PINNED</span>
-        <div class="info-pip" style="background: #006e00"></div>
-        <span class="info-text info-value" id="retriever-info">--</span>
-        <div class="info-pip" style="background: #ffb900"></div>
-        <span class="info-text" id="companion-info">N/A</span>
+        <div class="info-pip" id="key-pip" style="background:#ff716c"></div>
+        <span class="info-text info-value" id="key-label">NO KEY</span>
+        <div class="info-pip" style="background:#ffb900"></div>
+        <span class="info-text" id="companion-label">N/A</span>
       </div>
 
       <!-- Bottom status -->
       <div class="status-strip">
         <span class="status-text">CONTEXT_OS V3.0.1</span>
-        <span class="status-text" id="key-status">NO KEY</span>
+        <span class="status-text" id="mode-label">STATS</span>
       </div>
 
-      <!-- Skin shape on top of everything -->
+      <!-- Skin shape on top -->
       <div class="skin-bg"></div>
     </div>
 
+    <script src="../../shared/overlay-bridge.js"></script>
     <script>
-      // Poll extension for data
-      async function fetchData() {
-        try {
-          const stats = await chrome.runtime.sendMessage({
-            type: 'getMemoryStats',
-          });
-          if (stats && stats.success) {
-            document.getElementById('episode-count').textContent =
-              stats.episodeCount + ' / ' + stats.maxEpisodes;
+      const pages = ['page-stats', 'page-pipeline', 'page-capture'];
+      const modeNames = ['STATS', 'PIPELINE', 'CAPTURE'];
+      let currentPage = 0;
 
-            // Bar chart from recent episodes
-            const bars = document.getElementById('bar-chart');
-            bars.innerHTML = '';
-            const recent = stats.recentEpisodes || [];
-            const now = Date.now();
-            for (let i = 0; i < Math.max(recent.length, 8); i++) {
-              const div = document.createElement('div');
-              div.className = 'screen-bar';
-              if (recent[i]) {
-                const age = (now - recent[i].createdAt) / (1000 * 60 * 60);
-                div.style.height = Math.max(2, (1 - age / 24) * 14) + 'px';
-              } else {
-                div.style.height = '2px';
-                div.style.opacity = '0.2';
-              }
-              bars.appendChild(div);
-            }
+      // X button cycles pages
+      document.getElementById('x-btn').addEventListener('click', () => {
+        document.getElementById(pages[currentPage]).classList.remove('active');
+        currentPage = (currentPage + 1) % pages.length;
+        document.getElementById(pages[currentPage]).classList.add('active');
+        document.getElementById('mode-label').textContent = modeNames[currentPage];
+      });
 
-            document.getElementById('pinned-info').textContent =
-              (stats.pinnedTabCount || 0) + ' PINNED';
+      // Track last captured input for the capture page
+      let lastCapture = { text: 'No captures yet', meta: '' };
 
-            const scrollEl = document.getElementById('scroll-info');
-            const line =
-              'SHORT-TERM: ' +
-              recent.length +
-              ' \u00a0\u2022\u00a0 EPISODES: ' +
-              stats.episodeCount +
-              ' \u00a0\u2022\u00a0 ';
-            scrollEl.textContent = line + line;
+      // Listen for captured input messages from the extension
+      try {
+        chrome.runtime.onMessage.addListener((msg) => {
+          if (msg && msg.type === 'capturedInput') {
+            lastCapture = {
+              text: (msg.userText || '').slice(0, 200),
+              meta: new Date().toLocaleTimeString() + ' — ' + (msg.title || msg.url || ''),
+            };
           }
-        } catch (e) {
-          /* not connected */
+        });
+      } catch (_) {}
+
+      OverlayBridge.connect(3000);
+
+      OverlayBridge.onUpdate((s) => {
+        // Page 0: Stats
+        document.getElementById('episode-count').textContent =
+          s.episodes.count + ' / ' + s.episodes.max;
+        document.getElementById('health-status').textContent = s.status;
+
+        // Bar chart
+        const bars = document.getElementById('bar-chart');
+        bars.innerHTML = '';
+        const now = Date.now();
+        for (let i = 0; i < Math.max(s.episodes.recent.length, 8); i++) {
+          const div = document.createElement('div');
+          div.className = 'screen-bar';
+          if (s.episodes.recent[i]) {
+            const age = (now - s.episodes.recent[i].createdAt) / (1000 * 60 * 60);
+            div.style.height = Math.max(2, (1 - age / 24) * 14) + 'px';
+          } else {
+            div.style.height = '2px';
+            div.style.opacity = '0.2';
+          }
+          bars.appendChild(div);
         }
 
-        try {
-          const snap = await chrome.runtime.sendMessage({
-            type: 'getContextSnapshot',
-          });
-          if (snap && snap.success && snap.snapshot) {
-            const s = snap.snapshot;
-            document.getElementById('retriever-info').textContent =
-              s.retrievedEpisodes.length + '/' + s.candidateCount + ' HITS';
-            document.getElementById('health-status').textContent = 'NOMINAL';
-          }
-        } catch (e) {}
+        // Scroll text
+        const line = 'EPISODES: ' + s.episodes.count +
+          ' \u00a0\u2022\u00a0 PINNED: ' + s.pinned.count +
+          ' \u00a0\u2022\u00a0 RETRIEVER: ' + s.retriever.hits +
+          ' \u00a0\u2022\u00a0 ';
+        document.getElementById('scroll-info').textContent = line + line;
 
-        try {
-          const result = await chrome.storage.sync.get('geminiApiKey');
-          document.getElementById('key-status').textContent =
-            result.geminiApiKey ? 'KEY OK' : 'NO KEY';
-        } catch (e) {}
-      }
+        // Page 1: Pipeline
+        document.getElementById('p-retriever').textContent = s.retriever.hits;
+        document.getElementById('p-assembler').textContent = s.assembler.chars;
+        document.getElementById('p-pinned').textContent = s.pinned.count;
+        document.getElementById('p-companion').textContent =
+          'COMPANION: ' + s.companion.status.toUpperCase();
 
-      fetchData();
-      setInterval(fetchData, 4000);
+        // Page 2: Capture
+        document.getElementById('capture-text').textContent = lastCapture.text;
+        document.getElementById('capture-meta').textContent = lastCapture.meta;
+
+        // Info strip
+        document.getElementById('pinned-info').textContent = s.pinned.count + ' PINNED';
+        document.getElementById('key-label').textContent = s.apiKey.ok ? 'KEY OK' : 'NO KEY';
+        document.getElementById('key-pip').style.background = s.apiKey.ok ? '#82f76c' : '#ff716c';
+        document.getElementById('companion-label').textContent =
+          s.companion.status.toUpperCase();
+      });
     </script>
   </body>
 </html>

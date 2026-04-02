@@ -2,15 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Context_OS — BTTF Overlay</title>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
+      * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
         background: transparent;
         overflow: hidden;
@@ -18,215 +12,143 @@
         -webkit-font-smoothing: antialiased;
         user-select: none;
       }
-
-      .skin-root {
-        position: relative;
-        width: 490px;
-        height: 260px;
-      }
-
-      /* Main skin shape */
+      .skin-root { position: relative; width: 490px; height: 260px; }
       .skin-bg {
-        position: absolute;
-        inset: 0;
+        position: absolute; inset: 0;
         background: url('../mainback.png') no-repeat center center;
         background-size: contain;
-        z-index: 10;
-        pointer-events: none;
+        z-index: 10; pointer-events: none;
       }
 
-      /* Main display area — the scrolling text strip at top */
+      /* Scrolling display at top */
       .display-area {
-        position: absolute;
-        left: 160px;
-        top: 14px;
-        width: 140px;
-        height: 16px;
-        z-index: 5;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
+        position: absolute; left: 160px; top: 14px;
+        width: 140px; height: 16px; z-index: 5;
+        overflow: hidden; display: flex; align-items: center;
       }
-
       .display-text {
-        font-size: 7px;
-        font-weight: bold;
-        color: #ffffff;
-        text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+        font-size: 7px; font-weight: bold; color: #fff;
+        text-shadow: 0 0 6px rgba(255,255,255,0.4);
         white-space: nowrap;
         animation: scroll-bttf 10s linear infinite;
       }
-
       @keyframes scroll-bttf {
-        0% {
-          transform: translateX(0);
-        }
-        100% {
-          transform: translateX(-50%);
-        }
+        0% { transform: translateX(0); } 100% { transform: translateX(-50%); }
       }
 
-      /* Time display — right side of top bar */
+      /* Time circuit counter */
       .time-display {
-        position: absolute;
-        left: 300px;
-        top: 13px;
-        width: 60px;
-        height: 16px;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        position: absolute; left: 300px; top: 13px;
+        width: 60px; height: 16px; z-index: 5;
+        display: flex; align-items: center; justify-content: center;
       }
-
       .time-text {
-        font-size: 7px;
-        font-weight: bold;
-        color: #ffffff;
-        text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+        font-size: 7px; font-weight: bold; color: #fff;
+        text-shadow: 0 0 4px rgba(255,255,255,0.3);
         letter-spacing: 0.05em;
       }
 
-      /* Seek bar area — the orange progress strip */
+      /* Time circuit data panels */
+      .circuit-panel {
+        position: absolute; left: 70px; top: 32px;
+        width: 320px; height: 20px; z-index: 5;
+        display: flex; align-items: center;
+        justify-content: space-around; gap: 4px; padding: 0 8px;
+      }
+      .circuit-block { display: flex; flex-direction: column; align-items: center; }
+      .circuit-label {
+        font-size: 4.5px; font-weight: 900;
+        letter-spacing: 0.15em; text-transform: uppercase;
+        color: #f5a623; text-shadow: 0 0 4px rgba(245,166,35,0.3);
+      }
+      .circuit-value {
+        font-size: 7px; font-weight: 900; color: #fff;
+        text-shadow: 0 0 6px rgba(255,255,255,0.3);
+        letter-spacing: 0.05em;
+        transition: color 0.3s;
+      }
+      .circuit-value.hot { color: #f5a623; text-shadow: 0 0 8px rgba(245,166,35,0.6); }
+
+      /* Seek bar = memory capacity */
       .seek-area {
-        position: absolute;
-        left: 86px;
-        top: 57px;
-        width: 285px;
-        height: 8px;
-        z-index: 5;
+        position: absolute; left: 86px; top: 57px;
+        width: 285px; height: 8px; z-index: 5;
       }
-
       .seek-bg {
-        width: 100%;
-        height: 100%;
-        background: rgba(80, 80, 80, 0.5);
-        position: relative;
-        overflow: hidden;
+        width: 100%; height: 100%;
+        background: rgba(80,80,80,0.5);
+        position: relative; overflow: hidden;
       }
-
       .seek-fill {
         height: 100%;
         background: linear-gradient(90deg, #f5a623, #f7c948);
-        box-shadow: 0 0 6px rgba(245, 166, 35, 0.4);
+        box-shadow: 0 0 6px rgba(245,166,35,0.4);
         transition: width 0.6s ease;
       }
 
-      /* Volume area — right side slider */
-      .vol-area {
-        position: absolute;
-        left: 300px;
-        top: 57px;
-        width: 70px;
-        height: 8px;
-        z-index: 5;
-      }
-
-      /* Data readout — the DeLorean "time circuit" style */
-      .circuit-panel {
-        position: absolute;
-        left: 70px;
-        top: 32px;
-        width: 320px;
-        height: 20px;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-        gap: 4px;
-        padding: 0 8px;
-      }
-
-      .circuit-block {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0px;
-      }
-
-      .circuit-label {
-        font-size: 4.5px;
-        font-weight: 900;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: #f5a623;
-        text-shadow: 0 0 4px rgba(245, 166, 35, 0.3);
-      }
-
-      .circuit-value {
-        font-size: 7px;
-        font-weight: 900;
-        color: #ffffff;
-        text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
-        letter-spacing: 0.05em;
-      }
-
-      /* Status dots in the transport area */
+      /* Transport status area — clickable buttons */
       .transport-status {
-        position: absolute;
-        left: 80px;
-        top: 82px;
-        width: 300px;
-        height: 15px;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 0 8px;
+        position: absolute; left: 80px; top: 82px;
+        width: 300px; height: 15px; z-index: 15;
+        display: flex; align-items: center;
+        gap: 8px; padding: 0 8px;
       }
-
-      .status-dot {
-        width: 4px;
-        height: 4px;
-        flex-shrink: 0;
-      }
-
+      .status-dot { width: 4px; height: 4px; flex-shrink: 0; }
       .status-label {
-        font-size: 5px;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #adaaaa;
+        font-size: 5px; font-weight: 800;
+        letter-spacing: 0.12em; text-transform: uppercase; color: #adaaaa;
+      }
+      .status-highlight {
+        color: #f5a623; text-shadow: 0 0 4px rgba(245,166,35,0.3);
       }
 
-      .status-highlight {
-        color: #f5a623;
-        text-shadow: 0 0 4px rgba(245, 166, 35, 0.3);
+      /* Clickable mode buttons in the transport area */
+      .mode-btn {
+        cursor: pointer; padding: 1px 4px;
+        transition: opacity 0.2s;
+      }
+      .mode-btn:hover { opacity: 1 !important; }
+      .mode-btn:active { transform: scale(0.95); }
+      .mode-btn.active-mode .status-label { color: #f5a623; }
+
+      /* Capture text overlay — shown below circuit panel */
+      .capture-area {
+        position: absolute; left: 70px; top: 32px;
+        width: 320px; height: 20px; z-index: 5;
+        padding: 0 8px; display: none;
+        align-items: center;
+      }
+      .capture-area.active { display: flex; }
+      .capture-text {
+        font-size: 6px; font-weight: 700; color: #f5a623;
+        text-shadow: 0 0 4px rgba(245,166,35,0.3);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 300px; letter-spacing: 0.05em;
       }
 
       @keyframes blink {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
-        }
+        0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
       }
-
-      .blink {
-        animation: blink 1.5s ease-in-out infinite;
-      }
+      .blink { animation: blink 1.5s ease-in-out infinite; }
     </style>
   </head>
   <body>
     <div class="skin-root" id="root">
-      <!-- Scrolling metadata display -->
+      <!-- Scrolling display -->
       <div class="display-area">
         <span class="display-text" id="display-scroll">
-          CONTEXT_OS V3.0.1 &nbsp;&bull;&nbsp; MEMORY PIPELINE ACTIVE
-          &nbsp;&bull;&nbsp; CONTEXT_OS V3.0.1 &nbsp;&bull;&nbsp; MEMORY
-          PIPELINE ACTIVE &nbsp;&bull;&nbsp;
+          CONTEXT_OS V3.0.1 &nbsp;&bull;&nbsp; MEMORY PIPELINE ACTIVE &nbsp;&bull;&nbsp;
+          CONTEXT_OS V3.0.1 &nbsp;&bull;&nbsp; MEMORY PIPELINE ACTIVE &nbsp;&bull;&nbsp;
         </span>
       </div>
 
-      <!-- Time / episode counter -->
+      <!-- Time display -->
       <div class="time-display">
         <span class="time-text" id="time-readout">0 / 160</span>
       </div>
 
-      <!-- Time circuit data readout -->
-      <div class="circuit-panel">
+      <!-- Time circuit panels (MODE: STATS) -->
+      <div class="circuit-panel" id="panel-stats">
         <div class="circuit-block">
           <span class="circuit-label">SHORT</span>
           <span class="circuit-value" id="c-short">0</span>
@@ -249,6 +171,11 @@
         </div>
       </div>
 
+      <!-- Capture text (MODE: CAPTURE) -->
+      <div class="capture-area" id="panel-capture">
+        <span class="capture-text" id="capture-display">No captures yet</span>
+      </div>
+
       <!-- Seek bar = memory capacity fill -->
       <div class="seek-area">
         <div class="seek-bg">
@@ -256,92 +183,88 @@
         </div>
       </div>
 
-      <!-- Transport area status -->
+      <!-- Transport status — clickable mode switches -->
       <div class="transport-status">
-        <div class="status-dot" id="dot-key" style="background: #ff716c"></div>
+        <div class="status-dot" id="dot-key" style="background:#ff716c"></div>
         <span class="status-label" id="label-key">NO KEY</span>
-        <div class="status-dot" style="background: #484848"></div>
-        <span class="status-label" id="label-companion">COMPANION: N/A</span>
-        <div class="status-dot blink" style="background: #f5a623"></div>
-        <span class="status-label status-highlight" id="label-status"
-          >INITIALIZING</span
-        >
+
+        <div class="mode-btn active-mode" id="btn-stats" title="Stats view">
+          <span class="status-label status-highlight">STATS</span>
+        </div>
+        <div class="mode-btn" id="btn-capture" title="Last capture">
+          <span class="status-label">CAPTURE</span>
+        </div>
+
+        <div class="status-dot blink" style="background:#f5a623"></div>
+        <span class="status-label status-highlight" id="label-status">INITIALIZING</span>
       </div>
 
       <!-- Skin shape -->
       <div class="skin-bg"></div>
     </div>
 
+    <script src="../../shared/overlay-bridge.js"></script>
     <script>
-      async function fetchData() {
-        try {
-          const stats = await chrome.runtime.sendMessage({
-            type: 'getMemoryStats',
-          });
-          if (stats && stats.success) {
-            const recent = stats.recentEpisodes || [];
-            document.getElementById('time-readout').textContent =
-              stats.episodeCount + ' / ' + stats.maxEpisodes;
-            document.getElementById('c-short').textContent = recent.length;
-            document.getElementById('c-long').textContent = stats.episodeCount;
-            document.getElementById('c-pinned').textContent =
-              stats.pinnedTabCount || 0;
+      let mode = 'stats'; // 'stats' | 'capture'
+      let lastCapture = { text: 'No captures yet' };
 
-            const pct = (stats.episodeCount / stats.maxEpisodes) * 100;
-            document.getElementById('capacity-bar').style.width = pct + '%';
+      // Mode switching buttons
+      document.getElementById('btn-stats').addEventListener('click', () => setMode('stats'));
+      document.getElementById('btn-capture').addEventListener('click', () => setMode('capture'));
 
-            const scroll = document.getElementById('display-scroll');
-            const line =
-              'CONTEXT_OS \u00a0\u2022\u00a0 EPISODES: ' +
-              stats.episodeCount +
-              ' \u00a0\u2022\u00a0 RECENT: ' +
-              recent.length +
-              ' \u00a0\u2022\u00a0 PINNED: ' +
-              (stats.pinnedTabCount || 0) +
-              ' \u00a0\u2022\u00a0 ';
-            scroll.textContent = line + line;
-
-            document.getElementById('label-status').textContent = 'NOMINAL';
-          }
-        } catch (e) {}
-
-        try {
-          const snap = await chrome.runtime.sendMessage({
-            type: 'getContextSnapshot',
-          });
-          if (snap && snap.success && snap.snapshot) {
-            const s = snap.snapshot;
-            document.getElementById('c-retriever').textContent =
-              s.retrievedEpisodes.length + '/' + s.candidateCount;
-            document.getElementById('c-assembler').textContent =
-              s.totalChars > 0 ? (s.totalChars / 1000).toFixed(1) + 'K' : '--';
-          }
-        } catch (e) {}
-
-        try {
-          const result = await chrome.storage.sync.get('geminiApiKey');
-          const hasKey = !!result.geminiApiKey;
-          document.getElementById('label-key').textContent = hasKey
-            ? 'KEY OK'
-            : 'NO KEY';
-          document.getElementById('dot-key').style.background = hasKey
-            ? '#82f76c'
-            : '#ff716c';
-        } catch (e) {}
-
-        try {
-          const comp = await chrome.runtime.sendMessage({
-            type: 'nativeCompanionStatus',
-          });
-          if (comp && comp.success) {
-            document.getElementById('label-companion').textContent =
-              'COMPANION: ' + comp.state.connectionState.toUpperCase();
-          }
-        } catch (e) {}
+      function setMode(m) {
+        mode = m;
+        document.getElementById('panel-stats').style.display = m === 'stats' ? 'flex' : 'none';
+        document.getElementById('panel-capture').classList.toggle('active', m === 'capture');
+        document.getElementById('btn-stats').classList.toggle('active-mode', m === 'stats');
+        document.getElementById('btn-capture').classList.toggle('active-mode', m === 'capture');
       }
 
-      fetchData();
-      setInterval(fetchData, 4000);
+      // Listen for captured input
+      try {
+        chrome.runtime.onMessage.addListener((msg) => {
+          if (msg && msg.type === 'capturedInput') {
+            lastCapture.text = (msg.userText || '').slice(0, 200);
+            document.getElementById('capture-display').textContent = lastCapture.text;
+            // Flash the circuit values
+            document.querySelectorAll('.circuit-value').forEach((el) => {
+              el.classList.add('hot');
+              setTimeout(() => el.classList.remove('hot'), 1500);
+            });
+          }
+        });
+      } catch (_) {}
+
+      OverlayBridge.connect(3000);
+
+      OverlayBridge.onUpdate((s) => {
+        // Time readout
+        document.getElementById('time-readout').textContent =
+          s.episodes.count + ' / ' + s.episodes.max;
+
+        // Circuit panels
+        const recent = s.episodes.recent || [];
+        document.getElementById('c-short').textContent = recent.length;
+        document.getElementById('c-long').textContent = s.episodes.count;
+        document.getElementById('c-retriever').textContent = s.retriever.hits;
+        document.getElementById('c-assembler').textContent = s.assembler.chars;
+        document.getElementById('c-pinned').textContent = s.pinned.count;
+
+        // Capacity bar
+        const pct = (s.episodes.count / s.episodes.max) * 100;
+        document.getElementById('capacity-bar').style.width = pct + '%';
+
+        // Scrolling display
+        const line = 'CONTEXT_OS \u00a0\u2022\u00a0 EPISODES: ' + s.episodes.count +
+          ' \u00a0\u2022\u00a0 PINNED: ' + s.pinned.count +
+          ' \u00a0\u2022\u00a0 ' + s.status + ' \u00a0\u2022\u00a0 ';
+        document.getElementById('display-scroll').textContent = line + line;
+
+        // Status
+        document.getElementById('label-status').textContent = s.status;
+        document.getElementById('label-key').textContent = s.apiKey.ok ? 'KEY OK' : 'NO KEY';
+        document.getElementById('dot-key').style.background = s.apiKey.ok ? '#82f76c' : '#ff716c';
+      });
     </script>
   </body>
 </html>

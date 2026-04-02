@@ -12,7 +12,8 @@
         -webkit-font-smoothing: antialiased;
         user-select: none;
       }
-      .skin-root { position: fixed; bottom: 20px; right: 20px; width: 490px; height: 260px; }
+      .skin-root { position: fixed; top: 20px; left: 20px; width: 490px; height: 260px; cursor: grab; z-index: 99999; }
+      .skin-root.dragging { cursor: grabbing; }
       .skin-bg {
         position: absolute; inset: 0;
         background: url('../mainback.png') no-repeat center center;
@@ -204,6 +205,7 @@
     </div>
 
     <script src="../../shared/overlay-bridge.js"></script>
+    <script src="../../shared/draggable.js"></script>
     <script>
       let mode = 'stats'; // 'stats' | 'capture'
       let lastCapture = { text: 'No captures yet' };

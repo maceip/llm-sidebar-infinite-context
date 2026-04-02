@@ -51,6 +51,10 @@ async function build() {
       src: path.join(srcDir, 'styles'),
       dest: path.join(distDir, 'src/styles'),
     },
+    {
+      src: path.join(projectRoot, 'design-system/skins'),
+      dest: path.join(distDir, 'design-system/skins'),
+    },
   ];
 
   for (const file of filesToCopy) {
@@ -84,6 +88,7 @@ async function build() {
     path.join(srcDir, 'scripts/webExtraction.ts'),
     path.join(srcDir, 'scripts/agentdropContent.ts'),
     path.join(srcDir, 'scripts/inputCapture.ts'),
+    path.join(srcDir, 'scripts/injectOverlay.ts'),
   ];
 
   const sharedDefine = {

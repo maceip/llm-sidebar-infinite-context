@@ -147,6 +147,35 @@ export class BackgroundController {
         await chrome.sidePanel.open({ windowId: tab.windowId });
       }
     });
+
+    // Toggle overlay skin via Ctrl+Shift+O
+    chrome.commands.onCommand.addListener(async (command) => {
+      if (command !== 'toggle-overlay') return;
+      const [tab] = await this.tabService.query({
+        active: true,
+        currentWindow: true,
+      });
+      if (!tab?.id) return;
+
+      const overlayUrl = chrome.runtime.getURL(
+        'design-system/skins/xbox/overlay/index.html',
+      );
+
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: (url: string) => {
+          (
+            window as unknown as Record<string, string>
+          ).__CONTEXT_OS_OVERLAY_URL__ = url;
+        },
+        args: [overlayUrl],
+      });
+
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['src/scripts/injectOverlay.js'],
+      });
+    });
   }
 
   private async broadcastCurrentTabInfo() {

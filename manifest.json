@@ -34,6 +34,13 @@
         "mac": "Command+Shift+S"
       },
       "description": "Open the AI sidebar"
+    },
+    "toggle-overlay": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+O",
+        "mac": "Command+Shift+O"
+      },
+      "description": "Toggle the skin overlay"
     }
   },
   "content_scripts": [
@@ -42,6 +49,12 @@
       "js": ["src/scripts/inputCapture.js"],
       "run_at": "document_idle",
       "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["design-system/skins/**/*"],
+      "matches": ["<all_urls>"]
     }
   ],
   "icons": {

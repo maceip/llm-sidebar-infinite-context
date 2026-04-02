@@ -1,0 +1,395 @@
+<!-- http://www.theskinsfactory.com -->
+<!-- info@theskinsfactory.com -->
+
+<theme id="theBox-xp" title="Official Xbox Skin for Windows Media Player" author="The Skins Factory.com" copyright="(c)2002 Microsoft Corporation. All rights reserved." version="8" 
+	authorVersion="XP_fix">
+
+<!-- Microsoft preview image code -->
+	<view scriptfile="auto.js" titlebar="false" resizable="false" backgroundImage="preview.jpg" clippingColor="none" onload="AutoLoad();">
+	</view>
+<!-- end -->
+
+	<view id="mainBox" titleBar="false" width="350" height="216" backgroundColor="none" scriptFile="xbox.js;res://wmploc.dll/RT_TEXT/#132;" 
+		onLoad="mainLoader();" onClose="shutDown();" timerInterval="400" onTimer="resetCode()" onKeyPress="viewHotKeys();" >
+
+	<player PlayState_onchange="onPlayStateChange();" OpenState_onchange="onPlayStateChange()" status_onChange="updateMetadata();">
+ 		<controls currentPosition_onchange="progressMain.value=player.controls.currentPosition; " />
+	</player>
+
+		<video visible="false" enabled="true" onvideostart="theme.openview( 'videoBox' );" />
+
+		<subview zIndex="1" id="mainBack" left="0" top="0" backgroundImage="main.png" transparencyColor="#ff00ff">
+			<button id="minButton" left="169" top="9" image="min_hov.gif" hoverImage="min_no.gif" donwImage="min_do.gif" onClick="view.minimize();" upToolTip="Minimize" />
+			<button id="fullModeButton" left="195" top="9" image="full_hov.gif" hoverImage="full_no.gif" downImage="full_do.gif" onClick="view.returnToMediaCenter();" upToolTip="Return To Full Mode" />
+			<button id="closeButton" left="219" top="9" image="close_hov.gif" hoverImage="close_no.gif" downImage="close_do.gif" onClick="view.close();" upToolTip="Close" />
+
+			<button id="xBox" left="37" top="99" image="x_pulse.png" hoverImage="x_pulse.gif" downImage="x_pulse_hov.gif" onClick="toggleContent();" 
+			onMouseOver="pressButton(event);updateToolTip('contentViewer','xBox','XBOX Information');" onmousemove="pressButton(event);" onKeyDown="pressButton(event);"/>
+
+		</subview>
+		<subview zIndex="150" left="102" top="149" width="20" height="20">
+			<button id="reverseButton" zIndex="150" left="0" top="0" image="reverse_no.png" hoverImage="reverse_hov.png" downImage="reverse_do.png" hoverDownImage="reverse_hov.png" onClick="reverseAnim();" upToolTip="Close Shutter" sticky="true"/>
+		</subview>
+		<subview zIndex="2" left="39" top="155" width="198" height="48">
+		<subview zIndex="5" left="106" top="15" backgroundImage="button_patch.png" passthrough="true">
+		</subview>
+			<buttongroup zIndex="3" left="0" top="0" image="xp_up_open.gif" hoverImage="xp_hover_open.gif" downImage="xp_down_open.gif" mappingImage="xp_map_open.png">
+				<buttonelement upToolTip="Open Media File" onClick="openFile();" mappingColor="#990066"/>
+			</buttongroup>
+
+			<buttongroup zIndex="4" left="27" top="9" image="xp_pause_no.gif" hoverImage="xp_pause_hov.gif" downImage="xp_pause_do.gif" mappingImage="xp_pause_map.png" visible="wmpenabled:player.controls.pause">
+				<pauseelement mappingColor="#330099" />
+			</buttongroup>
+
+			<buttongroup zIndex="3" left="26" top="0" image="xp_up.gif" hoverImage="xp_hover.gif" downImage="xp_down.gif" mappingImage="xp_map.png">
+				<playelement mappingColor="#9900ff"/>
+				<stopelement mappingColor="#9900cc"/>
+			</buttongroup>
+			<buttongroup zIndex="3" left="106" top="15" image="xp_np_no.gif" hoverImage="xp_np_hov.gif" downImage="xp_np_do.gif" mappingImage="xp_np_map.png" transparencyColor="#ff00ff">
+				<prevelement mappingColor="#990033"/>
+				<nextelement mappingColor="#993300"/>
+			</buttongroup>
+
+		</subview>
+
+		<subview zIndex="50" left="207" top="167" backgroundImage="min_patch.png" passThrough="true">
+		</subview>
+
+		<subview zIndex="20" id="screenCover" left="124" top="49" backgroundImage="screen_cover.png" passthrough="true">
+			<subview zIndex="19" id="xIntro" left="0" top="0" backgroundImage="x_intro_anim.gif" passthrough="true">
+			</subview>
+ 			<subview zIndex="18" id="introAnim" left="2" top="0" backgroundImage="intro_anim.gif" transparencyColor="#ff00ff" passthrough="true">
+				<subview zIndex="17" left="0" id="introPNG" backgroundImage="intro_anim.png" visible="false">
+				</subview>
+			</subview>
+		</subview>
+
+		<subview zIndex="12" left="124" top="125" backgroundImage="screen_buttons_back.png">
+			<button zIndex="14" id="visPrev" left="32" top="41" image="vis_prev_no.gif" hoverImage="vis_prev_hov.gif" downImage="vis_prev_do.gif" onClick="jscript:visEffects.previous();" upToolTip="Previous Visualization"/>
+			<button zIndex="14" id="eqButton" left="56" top="22" image="eq_no.gif" hoverImage="eq_hov.gif" downImage="eq_do.gif" onClick="showEQ();" upToolTip="Equalizer" />
+			<button zIndex="14" id="visButton" left="84" top="23" image="vis_hov.gif" hoverImage="vis_no.gif" downImage="vis_do.gif" onClick="shuffVis(visStatus++);" upToolTip="Vis Effects - Click to change" visible="true"/>
+			<button zIndex="14" id="visButtonEQKiller" left="84" top="23" image="vis_hov.gif" hoverImage="vis_no.gif" downImage="vis_do.gif" onClick="showEQ();" upToolTip="Vis Effects" visible="false"/>
+			<button zIndex="14" id="plButton" left="113" top="22" image="pl_no.gif" hoverImage="pl_hov.gif" downImage="pl_do.gif" onClick="togglePL();" onMouseOver="updateToolTip('plViewer','plButton','Playlist')" />
+			<button zIndex="14" id="visNext" left="142" top="40" image="vis_next_no.gif" hoverImage="vis_next_hov.gif" downImage="vis_next_do.gif" onClick="jscript:visEffects.next();" upToolTip="Next Visualization"/>
+
+			<CustomSlider zIndex="10" id="volume" left="5" top="-4" min="0" max="100" borderSize="10" toolTip="Volume" image="vol.png" 
+			positionImage="vol_map.gif" enabled="true" value="wmpprop:player.settings.volume" 
+			value_onchange="wmpprop:player.settings.volume = value" cursor="hand" onkeydown="volUpDown(event);"/>
+
+		</subview>
+
+		<subview zIndex="11" left="124" top="49" backgroundImage="time_meta_back.png">
+			<text id="metadata" zIndex="19" left="37" top="13" width="110" height="10" textwidth_onchange="JScript:scrolling=(textwidth&gt;width);" 
+			fontSize="7" fontSmoothing="true" fontFace="arial,verdana" foregroundColor="#63E900"  
+			scrollingDelay="7" scrollingAmount="1" justification="center" fontStyle="bold" scrolling="true"/>
+
+			<text zIndex="19" id="time" left="72" top="2" width="50" fontSize="8" scrolling="false" fontSmoothing="true" 
+			foregroundColor="#63E900" scrolingDelay="50" scrollingAmmount="1" fontStyle="bold" justification="center"
+			value="wmpprop:player.controls.currentPositionString" fontFace="verdana,arial" />
+
+		<CustomSlider zIndex="10" id="progressMain" left="26" top="23" min="0" max="wmpprop:player.currentMedia.duration" borderSize="0" 
+		toolTip="Seek" image="seek.png" positionImage="seek_map.gif" enabled="true" onKeyDown="seekUpDown(event);"
+		cursor="hand" onmouseup="player.controls.currentPosition=progressMain.value;" />
+
+		</subview>
+
+		<subview zIndex="4" id="backAnimation" left="127" top="75" backgroundImage="screen_back_blur.jpg" visible="true">
+			<subview zIndex="5" id="visAnimation" left="0" top="0" backgroundImage="nobang2.gif" visible="false">
+			</subview>
+				<effects zIndex="2" id="visEffects" left="0" top="0" width="jscript:backAnimation.width" height="jscript:backAnimation.height" 
+				backgroundImage="" windowed="false" visible="false" currentEffectType="wmpprop:mediacenter.effectType" currentPreset="wmpprop:mediacenter.effectPreset" currentEffectType_onchange="mediacenter.effectType=currentEffectType;" currentPreset_onchange="mediacenter.effectPreset=currentPreset;" />
+
+		</subview>
+
+		<subview zIndex="6" id="eqBack" left="128" top="77" backgroundImage="eq_back.png" visible="false">
+
+		<button left="9" top="25" image="eq_prev_no.gif" hoverImage="eq_prev_hov.gif" downImage="eq_prev_do.gif" onClick="jscript:eq.previousPreset();" upToolTip="Previous Equalizer Preset"/>
+
+			<equalizerSettings id="eq" enable="true" />
+			<slider id="eq1" borderSize="4" left="25" top ="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel1" value_onchange="eq.gainLevel1=value;" direction="vertical" toolTip="31hz" />
+			<slider id="eq2" borderSize="4" left="38" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel2" value_onchange="eq.gainLevel2=value;" direction="vertical" toolTip="63hz" />
+			<slider id="eq3" borderSize="4" left="50" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel3" value_onchange="eq.gainLevel3=value;" direction="vertical" toolTip="125hz"/>
+			<slider id="eq4" borderSize="4" left="62" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel4" value_onchange="eq.gainLevel4=value;" direction="vertical" toolTip="250hz"/>
+			<slider id="eq5" borderSize="4" left="75" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel5" value_onchange="eq.gainLevel5=value;" direction="vertical" toolTip="500hz"/>
+			<slider id="eq6" borderSize="4" left="87" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel6" value_onchange="eq.gainLevel6=value;" direction="vertical" toolTip="1khz" />
+			<slider id="eq7" borderSize="4" left="100" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel7" value_onchange="eq.gainLevel7=value;" direction="vertical" toolTip="2khz" />
+			<slider id="eq8" borderSize="4" left="112" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel8" value_onchange="eq.gainLevel8=value;" direction="vertical" toolTip="4khz"/>
+			<slider id="eq9" borderSize="4" left="124" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel9" value_onchange="eq.gainLevel9=value;" direction="vertical" toolTip="8khz"/>
+			<slider id="eq10" borderSize="4" left="137" top="10" width="10" height="42" thumbImage="thumb.png" thumbDownImage="thumb2.png" min="-14" max="14" value="wmpprop:eq.gainLevel10" value_onchange="eq.gainLevel10=value;" direction="vertical" toolTip="16khz"/>
+
+			<text zIndex="50" id="eqPresetText" left="59" top="53" width="55" fontSize="7" scrolling="false" fontSmoothing="true" fontFace="verdana"
+			foregroundColor="#73cc00" scrolingDelay="85" scrollingAmmount="1" fontStyle="normal" justification="center"
+			value="wmpprop:eq.currentPresetTitle" visible="true"/>
+
+		<button left="148" top="25" image="eq_next_no.gif" hoverImage="eq_next_hov.gif" downImage="eq_next_do.gif" onClick="jscript:eq.nextPreset();" upToolTip="Next Equalizer Preset"/>
+
+		</subview>
+
+	</view>
+
+<!-- the video -->
+
+	<view id="videoBox" titleBar="false" width="398" height="400" 
+		minWidth="398" minHeight="400" resizable="true" backgroundColor="none" scriptFile="xbox.js"
+		onLoad="loadVidPrefs();" onClose="saveVidPrefs();" onKeyPress="viewHotKeys();" >
+
+		<player OpenState_onchange="checkVideoPlayerState();" PlayState_onchange="checkVideoPlayerState()" >
+			<controls currentPosition_onchange = "progress.value=player.controls.currentPosition; " />
+		</player>
+
+		<subview zIndex="4" left="0" top="0" backgroundImage="x_top_left.png" verticalAlignment="top" horizontalAlignment="left" transparencyColor="#ff00ff">
+		</subview>
+		<subview zIndex="4" left="0" top="jscript:view.height-161" backgroundImage="x_bot_left.png" verticalAlignment="bottom" horizontalAlignment="left"
+			transparencyColor="#ff00ff">
+
+		</subview>
+		<subview zIndex="4" left="jscript:view.width-77" top="jscript:view.height-161" backgroundImage="x_bot_right.png" verticalAlignment="bottom"
+			horizontalAlignment="right" transparencyColor="#ff00ff">
+			<button left="0" top="0" image="x_bot_right.png" onMouseDown="view.size( 'bottomright' );saveVidSize()" cursor="sizenwse"
+				tabstop="false" upToolTip="Resize"/>
+		</subview>
+		<subview zIndex="4" left="jscript:view.width-77" top="0" backgroundImage="x_top_right.png" verticalAlignment="top" horizontalAlignment="right"
+			 transparencyColor="#ff00ff">
+			 <button left="30" top="2" image="x_vid_close_no.gif" hoverImage="x_vid_close_hov.gif" downImage="x_vid_close_do.gif" onClick="stopVideo();"
+			 	upToolTip="Close"/>
+		</subview>
+
+		<subview zIndex="0" left="0" top="65" backgroundImage="x_left.png" verticalAlignment="stretch" horizontalAlignment="left" backgroundTiled="true"
+			transparencyColor="#ff00ff">
+		</subview>
+		<subview zIndex="0" left="65" top="jscript:view.height-108" backgroundImage="x_bot.png" verticalAlignment="bottom" horizontalAlignment="stretch"
+			backgroundTiled="true" transparencyColor="#ff00ff">
+		</subview>
+		<subview zIndex="0" left="jscript:view.width-24" top="65" backgroundImage="x_right.png" verticalAlignment="stretch" horizontalAlignment="right"
+			transparencyColor="#ff00ff" backgroundTiled="true">
+		</subview>
+		<subview zIndex="0" left="65" top="0" backgroundImage="x_top.png" verticalAlignment="top" horizontalAlignment="stretch" transparencyColor="#ff00ff"
+			backgroundTiled="true">
+		</subview>
+
+		<subview zIndex="3" left="77" top="jscript:view.height-144" backgroundImage="x_f_bot.png" verticalAlignment="bottom" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="2" left="230" top="jscript:view.height-144" backgroundImage="x_f_bot_s.png" verticalAlignment="bottom" horizontalAlignment="stretch"
+			backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-163" top="jscript:view.height-144" backgroundImage="x_f_bot2.png" verticalAlignment="bottom"
+			horizontalAlignment="right">
+		</subview>
+		<subview zIndex="3" left="77" top="24" backgroundImage="x_f_top.png" verticalAlignment="top" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="2" left="230" top="24" backgroundImage="x_f_top_s.png" verticalAlignment="top" horizontalAlignment="stretch" backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-163" top="24" backgroundImage="x_f_top2.png" verticalAlignment="top" horizontalAlignment="right">
+		</subview>
+		<subview zIndex="3" left="24" top="77" backgroundImage="x_f_left.png" verticalAlignment="top" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="2" left="24" top="177" backgroundImage="x_f_left_s.png" verticalAlignment="stretch" horizontalAlignmnet="left"
+			backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="24" top="jscript:view.height-217" backgroundImage="x_f_left2.png" verticalAlignment="bottom" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-60" top="77" backgroundImage="x_f_right.png" verticalAlignment="top" horizontalAlignment="right">
+		</subview>
+		<subview zIndex="2" left="jscript:view.width-60" top="177" backgroundImage="x_f_right_s.png" verticalAlignment="stretch" horizontalAlignment="right"
+			backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-60" top="jscript:view.height-217" backgroundImage="x_f_right2.png" verticalAlignment="bottom"
+			horizontalAlignment="right">
+		</subview>
+
+		<subview zIndex="6" id="centerBox" left="46" top="47" width="jscript:view.width-91" height="jscript:view.height-179" backgroundColor="#000000" 
+			verticalAlignment="stretch" horizontalAlignment="stretch">
+
+
+		<video zIndex="8" id="videoWin" windowless="false" width="jscript:centerBox.width" height="jscript:centerBox.height" 
+		horizontalAlignment="stretch" verticalAlignment="stretch" onvideostart="checkVideoPlayerState()" backgroundColor="#000000" onvideoend="checkVideoPlayerState()"
+		onclick="videoZoom();" fullScreen="true" maintainAspectRatio="true" stretchToFit="true" shrinkToFit="true"
+		tabstop="false"/>
+
+ 			<subview id="xLogo" zIndex="7" backgroundImage="x_logo.jpg" width="jsa:centerBox.width" height="jsa:centerBox.height" visible="true"
+				verticalAlignment="center" horizontalAlignment="center">
+			</subview>
+		</subview>
+
+		<subview zIndex="1" id="vidSettings" top="jscript:view.height-210" backgroundImage="x_vid_drawer.png" verticalAlignment="bottom" horizontalAlignment="center"  
+			transparencyColor="#ff00ff" onEndMove="hideVidSettings();">
+		<subview id="settingsFrame" zIndex="1" left="0" top="0" width="223" height="111">
+			<progressbar zIndex="20" left="20" top="17" width="184" height="6" id="progress" min="0" slide="false" 
+			max="wmpprop:player.currentMedia.duration" onmouseup="player.controls.currentPosition=progress.value;" borderSize="9" 
+			toolTip="Seek" cursor="hand" thumbImage="vid_thumb.png"/>
+
+		 	<videosettings id="vidset" enable="true" />
+
+				<button left="23" top="47" width="60" height="5" onClick="JScript:vidset.brightness=0;" upTooltip="Reset Brightness" cursor="hand"/>
+				<slider id="brightness"	toolTip="Brightness" left="91" top="47" width="111" height="6" borderSize="9" direction="horizontal" 
+				thumbImage="vid_thumb.png" thumbDownImage="vid_thumb.png" min="-127" max="127" value="wmpprop:vidset.brightness" value_onchange="vidset.brightness=value;" />
+				<button left="23" top="57" width="60" height="5" onClick="JScript:vidset.contrast=0;" upTooltip="Reset Contrast" cursor="hand"/>
+				<slider id="contrast" toolTip="Contrast" left="91" top="57" width="111" height="6" borderSize="9" direction="horizontal" slide="false" 
+				thumbImage="vid_thumb.png" thumbDownImage="vid_thumb.png" min="-127" max="127" value="wmpprop:vidset.contrast" value_onchange="vidset.contrast=value;"/>
+				<button left="23" top="67" width="60" height="5" onClick="JScript:vidset.hue=0;" upTooltip="Reset Hue" cursor="hand"/>
+				<slider id="hue" toolTip="Hue" left="91" top="67" width="111" height="6" borderSize="9" direction="horizontal" slide="false" thumbImage="vid_thumb.png" 
+				thumbDownImage="vid_thumb.png" min="-127" max="127" value="wmpprop:vidset.hue" 	value_onchange="vidset.hue=value;"/>
+				<button left="23" top="77" width="60" height="5" onClick="JScript:vidset.saturation=0;" upTooltip="Reset Saturation" cursor="hand"/>
+				<slider id="saturation"	toolTip="Saturation" left="91" top="77" width="111" height="6" borderSize="9" direction="horizontal" 
+				thumbImage="vid_thumb.png" thumbDownImage="vid_thumb.png" min="-127" max="127" value="wmpprop:vidset.saturation" value_onchange="vidset.saturation=value;"/>
+				
+			<buttongroup left="60" top="25" image="x_d_no.png" hoverImage="x_d_hov.png" downImage="x_d_do.png" mappingImage="x_d_map.png">
+				<prevelement mappingColor="#990033"/>
+				<playelement mappingColor="#9900ff"/>
+				<pauseelement mappingColor="#33ffff"/>
+				<stopelement mappingColor="#9900cc"/>
+				<buttonelement upToolTip="Open Media File" onClick="openFile()" mappingColor="#990066"/>
+				<nextelement mappingColor="#993300"/>
+			</buttongroup>
+
+		</subview>
+			<button zIndex="20" id="xDown" left="100" top="96" image="x_d_down.png" hoverImage="x_d_down_hov.png" downImage="x_d_down.png" onClick="moveVidSettings()" upToolTip="Open Video Settings" visible="true"/>
+			<button zIndex="22" id="xUp" left="100" top="96" image="x_d_up.png" hoverImage="x_d_up_hov.png" downImage="x_d_up.png" onClick="moveVidSettings()" upToolTip="Close Video Settings" visible="false"/>
+
+		</subview>
+		<subview zIndex="9" top="jscript:view.height-122" height="14" width="14" verticalAlignment="bottom" horizontalAlignment="center">
+			<button id="vidDrawerUpS" left="1" top="0" image="x_vid_drawer_down.png" hoverImage="x_vid_drawer_down_hov.png" downImage="x_vid_drawer_down_do.png" disabledImage="x_vid_drawer_down_disa.png" onClick="moveVidSettings();" upToolTip="Show Settings Drawer"/>
+		</subview>
+	</view>
+
+
+<!-- the pl -->
+
+	<view id="plBox" titleBar="false" width="398+50" height="316" minWidth="438" minHeight="316" resizable="true" backgroundColor="none" 
+		scriptFile="xbox.js" onLoad="onLoadPL();" onClose="onClosePL();" onKeyPress="viewHotKeys();" >
+
+		<player modeChange="updateShuffRep()" />
+
+		<subview zIndex="4" left="0" top="0" backgroundImage="x_top_left.png" verticalAlignment="top" horizontalAlignment="left" transparencyColor="#ff00ff">
+			<button id="shuffleButton" left="15" top="3" image="shuff_no.png" hoverImage="shuff_hov.gif" downImage="shuff_do.png" downHoverImage="shuff_hov.gif" sticky="true" 
+			upTooltip="Turn Shuffle On" downTooltip="Turn Shuffle Off" down="jscript:player.settings.getMode('shuffle');"	
+			onClick="player.settings.setMode('shuffle',down);" />
+
+			<button id="loopButton" left="38" top="3" image="rep_no.png" hoverImage="rep_hov.gif" downImage="rep_do.png" downHoverImage="rep_shuff.gif" sticky="true" 
+			upTooltip="Turn Repeat On" downTooltip="Turn Repeat Off" down="jscript:player.settings.getMode('loop');"	
+			onClick="player.settings.setMode('loop',down);" />
+
+		</subview>
+		<subview zIndex="4" left="0" top="jscript:view.height-77" backgroundImage="x_bot_left.png" verticalAlignment="bottom" horizontalAlignment="left"
+			transparencyColor="#ff00ff">
+		</subview>
+		<subview zIndex="4" left="jscript:view.width-77" top="jscript:view.height-77" backgroundImage="x_bot_right.png" verticalAlignment="bottom"
+			horizontalAlignment="right" transparencyColor="#ff00ff">
+			<button left="0" top="0" image="x_bot_right.png" onMouseDown="view.size( 'bottomright' );" cursor="sizenwse" tabstop="false"
+				upToolTip="Resize"/>
+		</subview>
+		<subview zIndex="4" left="jscript:view.width-77" top="0" backgroundImage="x_top_right.png" verticalAlignment="top" horizontalAlignment="right"
+			 transparencyColor="#ff00ff">
+			 <button left="30" top="2" image="x_vid_close_no.gif" hoverImage="x_vid_close_hov.gif" downImage="x_vid_close_do.gif" 
+			 	onClick="theme.savePreference('plViewer', 'false'); view.close();" upToolTip="Close"/>
+		</subview>
+
+		<subview zIndex="2" left="0" top="65" backgroundImage="x_left.png" verticalAlignment="stretch" horizontalAlignment="left" backgroundTiled="true"
+			transparencyColor="#ff00ff">
+		</subview>
+		<subview zIndex="2" left="65" top="jscript:view.height-24" backgroundImage="x_bot.png" verticalAlignment="bottom" horizontalAlignment="stretch"
+			backgroundTiled="true" transparencyColor="#ff00ff">
+		</subview>
+		<subview zIndex="2" left="jscript:view.width-24" top="65" backgroundImage="x_right.png" verticalAlignment="stretch" horizontalAlignment="right"
+			transparencyColor="#ff00ff" backgroundTiled="true">
+		</subview>
+		<subview zIndex="2" left="65" top="0" backgroundImage="x_top.png" verticalAlignment="top" horizontalAlignment="stretch" transparencyColor="#ff00ff"
+			backgroundTiled="true">
+		</subview>
+
+		<subview zIndex="3" left="77" top="jscript:view.height-60" backgroundImage="x_f_bot.png" verticalAlignment="bottom" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="2" left="230" top="jscript:view.height-60" backgroundImage="x_f_bot_s.png" verticalAlignment="bottom" horizontalAlignment="stretch"
+			backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-163" top="jscript:view.height-60" backgroundImage="x_f_bot2.png" verticalAlignment="bottom"
+			horizontalAlignment="right">
+		</subview>
+		<subview zIndex="3" left="77" top="24" backgroundImage="x_f_top.png" verticalAlignment="top" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="2" left="230" top="24" backgroundImage="x_f_top_s.png" verticalAlignment="top" horizontalAlignment="stretch" backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-163" top="24" backgroundImage="x_f_top2.png" verticalAlignment="top" horizontalAlignment="right">
+		</subview>
+		<subview zIndex="3" left="24" top="77" backgroundImage="x_f_left.png" verticalAlignment="top" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="2" left="24" top="177" backgroundImage="x_f_left_s.png" verticalAlignment="stretch" horizontalAlignmnet="left"
+			backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="24" top="jscript:view.height-133" backgroundImage="x_f_left2.png" verticalAlignment="bottom" horizontalAlignment="left">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-60" top="77" backgroundImage="x_f_right.png" verticalAlignment="top" horizontalAlignment="right">
+		</subview>
+		<subview zIndex="2" left="jscript:view.width-60" top="177" backgroundImage="x_f_right_s.png" verticalAlignment="stretch" horizontalAlignment="right"
+			backgroundTiled="true">
+		</subview>
+		<subview zIndex="3" left="jscript:view.width-60" top="jscript:view.height-133" backgroundImage="x_f_right2.png" verticalAlignment="bottom"
+			horizontalAlignment="right">
+		</subview>
+
+		<subview zIndex="6" id="plCenterBox" left="46" top="47" width="jscript:view.width-91" height="jscript:view.height-96" backgroundColor="#000000" 
+			verticalAlignment="stretch" horizontalAlignment="stretch">
+		<playlist id="plFrame" width="jscript:plCenterBox.width" height="jscript:plCenterBox.height"
+		backgroundColor="#000000" backgroundImage="" foregroundcolor="#7ec509" itemPlayingColor="#ffffff" itemPlayingBackgroundColor="#369108" 
+		disabledItemColor="#cccccc" columns="name=Name;artist=Artist;album=Album;duration=Time;" playlistItemsVisible="true" dropDownVisible="true" 
+		horizontalAlignment="stretch" verticalAlignment="stretch" allowItemEditing="true" columnsVisible="true" allowColumnSorting="true" 
+		editbuttonsvisible="false" movebuttonsvisible="false" checkboxesVisible="false"/>
+
+		</subview>
+
+	</view>
+
+<!-- content mode -->
+	<view id="contentBox" titleBar="false" width="398" height="316" minWidth="398" minHeight="316" resizable="false" backgroundColor="none" 
+		scriptFile="xbox.js;res://wmploc.dll/RT_TEXT/#132;" onLoad="theme.savePreference( 'contentViewer', 'true' )" onKeyPress="viewHotKeys();"  >
+		<subview zIndex="4" left="0" top="0" backgroundImage="content_mode.png" transparencyColor="#ff00ff">
+			 <button left="350" top="2" image="x_vid_close_no.gif" hoverImage="x_vid_close_hov.gif" downImage="x_vid_close_do.gif" onClick="theme.savePreference('contentViewer', 'false'); view.close();"
+			 	upToolTip="Close"/>
+	
+		</subview>
+
+		<subview zIndex="6" id="plCenterBox" left="60" top="60" width="jscript:view.width-120" height="jscript:view.height-120" backgroundColor="#000000" 
+			verticalAlignment="stretch" horizontalAlignment="stretch">
+		</subview>
+
+		<subview zIndex="10" id="contentShow" left="59" top="54" backgroundImage="c_xbox.jpg" width="284" visible="true">
+			<button id="systemLink" left="0" top="0" width="284" height="100" onClick="jscript:player.launchURL('http://www.xbox.com/system/default.htm')" cursor="hand" visible="true"/>
+			<button id="gamesLink" left="0" top="0" width="284" height="100" onClick="jscript:player.launchURL('http://www.xbox.com/games/default.htm')" cursor="hand" visible="false"/>
+			<button id="abcLink" left="0" top="0" width="284" height="100" onClick="jscript:player.launchURL('http://www.xbox.com/')" cursor="hand" visible="false"/>
+			<button id="winmediaLink" left="0" top="0" width="284" height="100" onClick="jscript:player.launchURL('http://www.windowsmedia.com')" cursor="hand" visible="false"/>
+			<button id="csLink" left="0" top="0" width="284" height="100" onClick="jscript:player.launchURL('http://www.microsoft.com/windows/windowsmedia/coolstuff.asp')" cursor="hand" visible="false"/>
+		</subview>
+
+		<subview zIndex="9" id="alphaShader" left="69" top="151" backgroundImage="c_alpha_shader.png" passthrough="true">
+		</subview>
+		<subview zIndex="10" id="nav" left="59" top="234" backgroundImage="c_nav.png">
+		</subview>
+		<subview zIndex="11" left="234" top="149" backgroundImage="c_patch.png" passThrough="true">
+		</subview>
+			<subview zIndex="8" id="xboxText" left="65" top="172" backgroundImage="c_xbox_text.gif" visible="true">
+			</subview>
+			<subview zIndex="8" id="gamesText" left="65" top="235" backgroundImage="c_games_text.gif" visible="true">
+			</subview>
+			<subview zIndex="8" id="webText" left="65" top="235" backgroundImage="c_web_text.gif" visible="true">
+			</subview>
+			<subview zIndex="8" id="winmediaText" left="65" top="235" backgroundImage="c_winmedia_text.gif" width="255" height="62" visible="true">
+				<!-- <button id="wLink" left="50" top="25" image="winmedia_text.png" onClick="jscript:player.launchURL('http://www.windowsmedia.com')" cursor="hand" upToolTip="WindowsMedia.com" visible="true"/> -->
+			</subview>
+
+			<subview zIndex="8" id="winmediaTextCS" left="65" top="235" backgroundImage="c_winmedia_text_cs.gif" width="255" height="62" visible="true">
+			</subview>
+
+
+	<subview zIndex="18" left="0" top="0" width="398" height="316" >
+
+		<button id="cPrev" left="310" top="156" image="c_up_no.gif" hoverImage="c_up_hov.gif" downImage="c_up_do.gif" onClick="contentSwitcher(contentStatus--)" visible="false" upToolTip="Previous"/>
+
+		<button id="xLink" left="70" top="245" image="xbox_text.png" hoverImage="xbox_text2.png" onClick="jscript:player.launchURL('http://www.xbox.com')" cursor="hand" upToolTip="XBOX.com" visible="true"/>
+		<button id="wLink" left="70" top="247" image="winmedia_link1.png" hoverImage="winmedia_link2.png" onClick="jscript:player.launchURL('http://www.windowsmedia.com/mg/Games.asp')" cursor="hand" upToolTip="WindowsMedia.com Games Guide" visible="false"/>
+		<button id="wLink2" left="70" top="247" image="winmedia_link_cs1.png" hoverImage="winmedia_link_cs2.png" onClick="jscript:player.launchURL('http://www.microsoft.com/windows/windowsmedia/coolstuff.asp')" cursor="hand" upToolTip="WindowsMedia Cool Stuff" visible="false"/>
+		<button id="cNext" left="310" top="235" image="c_down_no.gif" hoverImage="c_down_hov.gif" downImage="c_down_do.gif" onClick="contentSwitcher(contentStatus++)" visible="true" upToolTip="Next"/>
+
+	</subview>
+
+	</view>
+</theme>

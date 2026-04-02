@@ -1,3 +1,5 @@
+mod ocr;
+
 use anyhow::{anyhow, Context, Result};
 use dirs::config_dir;
 use interprocess::{
@@ -9,6 +11,7 @@ use serde_json::{json, Value};
 use std::env;
 use std::fs;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
+use std::net::TcpListener;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::{Mutex, OnceLock};
@@ -552,6 +555,104 @@ fn daemon_dispatch(request: RpcRequest, state: &mut DaemonState) -> Value {
     }
 }
 
+const CRX_SERVER_PORT: u16 = 17532;
+
+/// Spawn a local HTTP server that serves the CRX file and Chrome update manifest.
+/// This enables the ExtensionInstallForcelist GPO to install the extension from localhost.
+fn spawn_crx_server(extension_id: String) {
+    // Find the CRX file in the install directory
+    let install_dir = if cfg!(windows) {
+        let local_app = env::var("LOCALAPPDATA").unwrap_or_else(|_| {
+            let home = env::var("USERPROFILE").unwrap_or_default();
+            format!(r"{home}\AppData\Local")
+        });
+        PathBuf::from(local_app).join("LLMSidebar")
+    } else {
+        let home = env::var("HOME").unwrap_or_default();
+        PathBuf::from(home).join(".local/share/llm-sidebar")
+    };
+
+    let crx_path = install_dir.join("llm-sidebar.crx");
+    if !crx_path.exists() {
+        eprintln!("crx server: no CRX found at {}, skipping", crx_path.display());
+        return;
+    }
+
+    std::thread::spawn(move || {
+        let addr = format!("127.0.0.1:{CRX_SERVER_PORT}");
+        let listener = match TcpListener::bind(&addr) {
+            Ok(l) => l,
+            Err(e) => {
+                eprintln!("crx server: failed to bind {addr}: {e}");
+                return;
+            }
+        };
+        eprintln!("crx server: listening on {addr}");
+
+        for stream in listener.incoming() {
+            let Ok(mut stream) = stream else { continue };
+
+            let mut buf = [0u8; 2048];
+            let n = match stream.read(&mut buf) {
+                Ok(n) => n,
+                Err(_) => continue,
+            };
+            let request = String::from_utf8_lossy(&buf[..n]);
+
+            // Parse the request path
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("/");
+
+            match path {
+                "/update.xml" => {
+                    let xml = format!(
+                        r#"<?xml version='1.0' encoding='UTF-8'?>
+<gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
+  <app appid='{extension_id}'>
+    <updatecheck codebase='http://127.0.0.1:{CRX_SERVER_PORT}/llm-sidebar.crx' version='1.0' />
+  </app>
+</gupdate>"#
+                    );
+                    let response = format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        xml.len(),
+                        xml
+                    );
+                    let _ = stream.write_all(response.as_bytes());
+                }
+                "/llm-sidebar.crx" => {
+                    match fs::read(&crx_path) {
+                        Ok(crx_data) => {
+                            let header = format!(
+                                "HTTP/1.1 200 OK\r\nContent-Type: application/x-chrome-extension\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                                crx_data.len()
+                            );
+                            let _ = stream.write_all(header.as_bytes());
+                            let _ = stream.write_all(&crx_data);
+                        }
+                        Err(e) => {
+                            let body = format!("CRX read error: {e}");
+                            let response = format!(
+                                "HTTP/1.1 500 Internal Server Error\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                                body.len(),
+                                body
+                            );
+                            let _ = stream.write_all(response.as_bytes());
+                        }
+                    }
+                }
+                _ => {
+                    let response = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                    let _ = stream.write_all(response.as_bytes());
+                }
+            }
+        }
+    });
+}
+
 fn spawn_overlay_thread() {
     if !matches!(env::consts::OS, "macos" | "windows") {
         return;
@@ -639,6 +740,7 @@ fn run_daemon() -> Result<()> {
     save_state(&paths, &state)?;
 
     spawn_overlay_thread();
+    spawn_crx_server(extension_id);
 
     let socket_name = daemon_socket_name(&paths)?;
     let listener = ListenerOptions::new()
@@ -696,10 +798,92 @@ fn install_assets() -> Result<()> {
     Ok(())
 }
 
+fn run_ocr_test() -> Result<()> {
+    let img_path = env::args().nth(2).ok_or_else(|| anyhow!("usage: overlay-companion ocr-test <image.png>"))?;
+
+    let model_dir = ocr::OcrEngine::find_models_dir()
+        .ok_or_else(|| anyhow!("cannot find OCR models directory (expected models/ next to binary)"))?;
+
+    eprintln!("loading models from {}...", model_dir.display());
+    let mut engine = ocr::OcrEngine::load(&model_dir)?;
+
+    // Warmup with tiny dummy image
+    eprintln!("warmup...");
+    let dummy = vec![128u8; 32 * 32 * 4];
+    let _ = engine.recognize(&dummy, 32, 32);
+
+    eprintln!("reading {}...", img_path);
+    let img = image::open(&img_path).with_context(|| format!("opening {img_path}"))?;
+    let rgba = img.to_rgba8();
+    let (w, h) = (rgba.width(), rgba.height());
+    eprintln!("image: {}x{}", w, h);
+
+    eprintln!("running OCR...");
+    let result = engine.recognize(rgba.as_raw(), w, h)?;
+    eprintln!("done in {}ms, {} regions found", result.elapsed_ms, result.regions.len());
+
+    // Parse terminal-style output into prompt/response pairs
+    // Heuristic: lines starting with $ or > or user@host are prompts,
+    // everything else until the next prompt is the response.
+    let lines: Vec<&str> = result.full_text.lines().collect();
+    let mut pairs: Vec<(String, String)> = Vec::new();
+    let mut current_prompt: Option<String> = None;
+    let mut current_response = String::new();
+
+    for line in &lines {
+        let trimmed = line.trim();
+        let is_prompt = trimmed.starts_with('$')
+            || trimmed.starts_with('>')
+            || trimmed.starts_with('#')
+            || trimmed.contains("@")  // user@host
+            || trimmed.starts_with(">>>");  // Python REPL
+
+        if is_prompt {
+            // Save previous pair
+            if let Some(prompt) = current_prompt.take() {
+                pairs.push((prompt, current_response.trim().to_string()));
+                current_response.clear();
+            }
+            current_prompt = Some(trimmed.to_string());
+        } else if current_prompt.is_some() && !trimmed.is_empty() {
+            if !current_response.is_empty() {
+                current_response.push('\n');
+            }
+            current_response.push_str(trimmed);
+        }
+    }
+    // Flush last pair
+    if let Some(prompt) = current_prompt.take() {
+        pairs.push((prompt, current_response.trim().to_string()));
+    }
+
+    println!("=== RAW OCR TEXT ===");
+    println!("{}", result.full_text);
+    println!();
+    println!("=== PARSED PAIRS ===");
+    if pairs.is_empty() {
+        println!("(no prompt/response pairs detected)");
+        println!();
+        println!("individual regions:");
+        for (i, r) in result.regions.iter().enumerate() {
+            println!("  [{}] ({:.0}%) \"{}\"", i, r.confidence * 100.0, r.text);
+        }
+    } else {
+        for (i, (prompt, response)) in pairs.iter().enumerate() {
+            println!("--- pair {} ---", i + 1);
+            println!("  prompt:   {}", prompt);
+            println!("  response: {}", if response.is_empty() { "(none)" } else { response });
+        }
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     match env::args().nth(1).as_deref() {
         Some("daemon") => run_daemon(),
         Some("install-assets") => install_assets(),
+        Some("ocr-test") => run_ocr_test(),
         _ => run_host(),
     }
 }

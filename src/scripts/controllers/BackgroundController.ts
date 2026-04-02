@@ -171,7 +171,10 @@ export class BackgroundController {
       // Ignore error if sidebar is closed (receiving end does not exist)
       if (
         err.message &&
-        !err.message.includes('Receiving end does not exist.')
+        !err.message.includes('Receiving end does not exist.') &&
+        !err.message.includes(
+          'message port closed before a response was received',
+        )
       ) {
         console.error('Error sending current tab info:', error);
       }
@@ -232,6 +235,8 @@ export class BackgroundController {
           return await this.handleHideNativeOverlay();
         case MessageTypes.TOGGLE_NATIVE_OVERLAY:
           return await this.handleToggleNativeOverlay();
+        case MessageTypes.CAPTURED_INPUT:
+          return await this.handleCapturedInput(request);
         default:
           return {
             error: `Unknown message type: ${(request as { type: unknown }).type}`,
@@ -575,6 +580,30 @@ export class BackgroundController {
 
   private async handleToggleNativeOverlay(): Promise<SuccessResponse> {
     return this.nativeCompanionService.toggleOverlay();
+  }
+
+  private async handleCapturedInput(request: {
+    userText: string;
+    responseText?: string;
+    url: string;
+    title: string;
+    timestamp: number;
+  }): Promise<{ success: boolean }> {
+    const { userText, responseText, url, title } = request;
+
+    // Build a combined text for the memory episode
+    const modelText = responseText || `[captured from ${title} at ${url}]`;
+
+    try {
+      await this.memoryPipeline.recordTurn(userText, modelText);
+      console.log(
+        `[InputCapture] Recorded episode from ${url}: ${userText.slice(0, 60)}...`,
+      );
+      return { success: true };
+    } catch (error) {
+      console.error('[InputCapture] Failed to record episode:', error);
+      return { success: false };
+    }
   }
 
   private async getApiKey(): Promise<string | null> {

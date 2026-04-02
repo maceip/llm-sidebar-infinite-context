@@ -350,7 +350,8 @@ export class SidebarController {
   }
 
   private updateCompanionIndicator(state: NativeCompanionState): void {
-    if (!this.companionDot || !this.companionLabel || !this.companionPill) return;
+    if (!this.companionDot || !this.companionLabel || !this.companionPill)
+      return;
 
     const companionStateClass =
       state.connectionState === 'connected'
@@ -603,7 +604,6 @@ export class SidebarController {
     return div.innerHTML;
   }
 
-
   private async refreshNativeOverlayStatus() {
     try {
       const response =
@@ -625,11 +625,14 @@ export class SidebarController {
             : 'hidden';
       const label = `Overlay: ${visibleLabel} / ${connectionState}`;
       this.nativeOverlayStatusPill.textContent = label;
-      this.nativeOverlayStatusPill.title = response.state.diagnostics.join(' | ');
+      this.nativeOverlayStatusPill.title =
+        response.state.diagnostics.join(' | ');
       const enabled =
         connectionState === 'connected' && overlayStatus !== 'unsupported';
-      this.showNativeOverlayButton.disabled = !enabled || overlayVisible === true;
-      this.hideNativeOverlayButton.disabled = !enabled || overlayVisible === false;
+      this.showNativeOverlayButton.disabled =
+        !enabled || overlayVisible === true;
+      this.hideNativeOverlayButton.disabled =
+        !enabled || overlayVisible === false;
     } catch {
       if (this.nativeOverlayStatusPill) {
         this.nativeOverlayStatusPill.textContent = 'Overlay: unavailable';

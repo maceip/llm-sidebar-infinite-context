@@ -131,6 +131,52 @@ pub fn find_crx() -> Option<PathBuf> {
     None
 }
 
+/// Find the unpacked extension directory (dist/) adjacent to the installer.
+pub fn find_unpacked_extension() -> Option<PathBuf> {
+    let exe = env::current_exe().ok()?;
+    let dir = exe.parent()?;
+
+    // Check for an "extension" subfolder first, then "dist"
+    let candidates = [
+        dir.join("extension"),
+        dir.join("dist"),
+    ];
+
+    for candidate in &candidates {
+        if candidate.join("manifest.json").exists() {
+            return Some(candidate.clone());
+        }
+    }
+
+    // Check if manifest.json is right next to the installer (flat layout)
+    if dir.join("manifest.json").exists() {
+        return Some(dir.to_path_buf());
+    }
+
+    None
+}
+
+/// Copy an entire directory recursively.
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+    Ok(())
+}
+
+/// Get the path where the unpacked extension is installed.
+pub fn extension_install_path() -> PathBuf {
+    install_dir().join("extension")
+}
+
 pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::Error>> {
     let dest_dir = install_dir();
     fs::create_dir_all(&dest_dir)?;
@@ -145,6 +191,18 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
     set_executable(&host_dest);
     report.host_installed = true;
     report.overlay_installed = true;
+
+    // Copy installer itself as uninstaller
+    if let Ok(self_exe) = env::current_exe() {
+        let uninstaller_name = if cfg!(windows) { "uninstall.exe" } else { "uninstall" };
+        let uninstaller_dest = dest_dir.join(uninstaller_name);
+        if let Err(e) = fs::copy(&self_exe, &uninstaller_dest) {
+            eprintln!("  WARNING: Could not copy uninstaller: {e}");
+        } else {
+            set_executable(&uninstaller_dest);
+            println!("  Uninstaller copied to {}", uninstaller_dest.display());
+        }
+    }
 
     if let Some(overlay_src) = find_adjacent_binary(overlay_binary_name()) {
         let overlay_dest = dest_dir.join(overlay_binary_name());
@@ -184,12 +242,12 @@ pub fn install(extension_id: &str) -> Result<InstallReport, Box<dyn std::error::
         }
     }
 
-    // 3. Install CRX if present
+    // 3. Install CRX extension
     if let Some(crx_path) = find_crx() {
         install_crx(&crx_path, extension_id, &dest_dir)?;
         report.crx_installed = true;
     } else {
-        println!("  No .crx found next to installer, skipping CRX install.");
+        println!("  No .crx found next to installer, skipping extension install.");
     }
 
     Ok(report)
@@ -219,6 +277,8 @@ pub struct InstallReport {
     pub host_installed: bool,
     pub overlay_installed: bool,
     pub crx_installed: bool,
+    pub extension_installed: bool,
+    pub extension_path: Option<PathBuf>,
     pub browsers_registered: Vec<String>,
     pub browser_errors: Vec<(String, String)>,
 }
@@ -259,15 +319,50 @@ fn install_crx(crx_path: &Path, extension_id: &str, dest_dir: &Path) -> Result<(
 fn install_crx(crx_path: &Path, extension_id: &str, dest_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let crx_dest = dest_dir.join("llm-sidebar.crx");
     fs::copy(crx_path, &crx_dest)?;
+    println!("  CRX copied to {}", crx_dest.display());
 
     use winreg::enums::*;
     use winreg::RegKey;
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let path = format!(r"Software\Google\Chrome\Extensions\{extension_id}");
-    let (key, _) = hkcu.create_subkey(&path)?;
-    key.set_value("path", &crx_dest.to_string_lossy().to_string())?;
-    key.set_value("version", &"1.0")?;
-    println!(r"  Registered external extension in HKCU\{path}");
+    // Point to the local HTTP server in the overlay companion daemon
+    let update_url = "http://127.0.0.1:17532/update.xml";
+    let force_value = format!("{extension_id};{update_url}");
+
+    // Use ExtensionInstallForcelist policy for each browser — this actually works
+    // for sideloading CRX on modern Chrome/Edge/Brave
+    let policy_paths = [
+        r"Software\Policies\Google\Chrome\ExtensionInstallForcelist",
+        r"Software\Policies\Microsoft\Edge\ExtensionInstallForcelist",
+        r"Software\Policies\BraveSoftware\Brave-Browser\ExtensionInstallForcelist",
+    ];
+
+    for policy_path in &policy_paths {
+        let (key, _) = hkcu.create_subkey(policy_path)?;
+        // Find next available numeric slot
+        let mut slot = 1u32;
+        loop {
+            match key.get_value::<String, _>(slot.to_string()) {
+                Ok(existing) if existing.starts_with(extension_id) => break, // already registered
+                Err(_) => break, // empty slot
+                Ok(_) => slot += 1, // occupied by another extension
+            }
+        }
+        key.set_value(slot.to_string(), &force_value)?;
+        println!("  Registered extension policy in HKCU\\{policy_path}");
+    }
+
+    // Also write the legacy external extension keys as fallback
+    let legacy_paths = [
+        format!(r"Software\Google\Chrome\Extensions\{extension_id}"),
+        format!(r"Software\Microsoft\Edge\Extensions\{extension_id}"),
+    ];
+
+    for path in &legacy_paths {
+        let (key, _) = hkcu.create_subkey(path)?;
+        key.set_value("path", &crx_dest.to_string_lossy().to_string())?;
+        key.set_value("version", &"1.0")?;
+    }
+
     Ok(())
 }

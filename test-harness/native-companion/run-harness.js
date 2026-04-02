@@ -70,7 +70,13 @@ function resolveInstallerBinaryPath() {
 function resolveInstalledNativeBinaryPath() {
   const extension = process.platform === 'win32' ? '.exe' : '';
   if (process.platform === 'win32') {
-    return path.join(tempHome, 'AppData', 'Local', 'LLMSidebar', `overlay-companion${extension}`);
+    return path.join(
+      tempHome,
+      'AppData',
+      'Local',
+      'LLMSidebar',
+      `overlay-companion${extension}`,
+    );
   }
   return path.join(
     tempHome,
@@ -203,7 +209,9 @@ async function runInstaller(extensionId) {
 async function verifyInstallerArtifacts(extensionId) {
   const installedBinary = resolveInstalledNativeBinaryPath();
   if (!fs.existsSync(installedBinary)) {
-    throw new Error(`Installer did not copy overlay companion to ${installedBinary}`);
+    throw new Error(
+      `Installer did not copy overlay companion to ${installedBinary}`,
+    );
   }
 
   const manifestDirs = [
@@ -232,7 +240,9 @@ async function verifyInstallerArtifacts(extensionId) {
 
   for (const item of manifestChecks.filter((entry) => entry.exists)) {
     if (item.content.name !== HOST_NAME) {
-      throw new Error(`Manifest name mismatch in ${item.manifestPath}: ${item.content.name}`);
+      throw new Error(
+        `Manifest name mismatch in ${item.manifestPath}: ${item.content.name}`,
+      );
     }
     if (item.content.path !== installedBinary) {
       throw new Error(
@@ -241,7 +251,9 @@ async function verifyInstallerArtifacts(extensionId) {
     }
     if (
       !Array.isArray(item.content.allowed_origins) ||
-      !item.content.allowed_origins.includes(`chrome-extension://${extensionId}/`)
+      !item.content.allowed_origins.includes(
+        `chrome-extension://${extensionId}/`,
+      )
     ) {
       throw new Error(
         `Manifest allowed_origins mismatch in ${item.manifestPath}: ${JSON.stringify(item.content.allowed_origins)}`,
@@ -263,7 +275,10 @@ async function mirrorManifestIntoUserDataDir(installerArtifacts) {
     throw new Error('No installer-generated manifest available to mirror');
   }
 
-  const profileNativeMessagingDir = path.join(userDataDir, 'NativeMessagingHosts');
+  const profileNativeMessagingDir = path.join(
+    userDataDir,
+    'NativeMessagingHosts',
+  );
   await fse.ensureDir(profileNativeMessagingDir);
   const destinationManifest = path.join(
     profileNativeMessagingDir,

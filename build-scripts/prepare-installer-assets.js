@@ -27,7 +27,11 @@ async function main() {
     nativeBinaryName('llm-sidebar-installer'),
   );
   const crxPath = path.join(projectRoot, 'dist', 'llm-sidebar.crx');
-  const extensionIdPath = path.join(projectRoot, 'dist', 'llm-sidebar-extension-id.txt');
+  const extensionIdPath = path.join(
+    projectRoot,
+    'dist',
+    'llm-sidebar-extension-id.txt',
+  );
 
   if (!(await fs.pathExists(hostBinary))) {
     throw new Error(`Native host binary not found: ${hostBinary}`);
@@ -36,15 +40,23 @@ async function main() {
     throw new Error(`Installer binary not found: ${installerBinary}`);
   }
   if (!(await fs.pathExists(crxPath))) {
-    throw new Error(`CRX not found: ${crxPath}. Run npm run pack-crx or npm run build:package.`);
+    throw new Error(
+      `CRX not found: ${crxPath}. Run npm run pack-crx or npm run build:package.`,
+    );
   }
   if (!(await fs.pathExists(extensionIdPath))) {
     throw new Error(`Extension ID metadata not found: ${extensionIdPath}`);
   }
 
   await fs.emptyDir(bundleDir);
-  await fs.copy(hostBinary, path.join(bundleDir, nativeBinaryName('overlay-companion')));
-  await fs.copy(installerBinary, path.join(bundleDir, nativeBinaryName('llm-sidebar-installer')));
+  await fs.copy(
+    hostBinary,
+    path.join(bundleDir, nativeBinaryName('overlay-companion')),
+  );
+  await fs.copy(
+    installerBinary,
+    path.join(bundleDir, nativeBinaryName('llm-sidebar-installer')),
+  );
   await fs.copy(crxPath, path.join(bundleDir, path.basename(crxPath)));
   await fs.copy(
     extensionIdPath,

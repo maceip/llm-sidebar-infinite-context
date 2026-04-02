@@ -1,0 +1,12 @@
+# Cargo struggles with incremental compilation on cross-filesystem mounts
+# (e.g. WSL paths accessed from Windows, or vice versa). Setting a native
+# target directory avoids lock-file and symlink errors.
+#
+# Override per-platform:
+#   Windows (PowerShell): $env:CARGO_TARGET_DIR="C:\tmp\llm-sidebar-target"
+#   WSL / Linux:          export CARGO_TARGET_DIR=/tmp/llm-sidebar-target
+#
+# The setting below disables incremental compilation project-wide, which is
+# the minimal fix that works everywhere without relocating the target dir.
+[build]
+incremental = false

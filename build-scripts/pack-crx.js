@@ -235,8 +235,11 @@ async function main() {
       return String.fromCharCode(97 + hi) + String.fromCharCode(97 + lo);
     })
     .join('');
-  fs.writeFileSync(outExtensionId, `${extensionId}
-`);
+  fs.writeFileSync(
+    outExtensionId,
+    `${extensionId}
+`,
+  );
   console.log(`Extension ID: ${extensionId}`);
   console.log(`Extension ID metadata written to ${outExtensionId}`);
 }

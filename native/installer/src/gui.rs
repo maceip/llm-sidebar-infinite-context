@@ -61,8 +61,8 @@ impl Default for Wizard {
 pub fn run_wizard() {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([560.0, 480.0])
-            .with_min_inner_size([560.0, 480.0])
+            .with_inner_size([620.0, 580.0])
+            .with_min_inner_size([560.0, 520.0])
             .with_title("LLM Sidebar Setup"),
         ..Default::default()
     };
@@ -103,14 +103,19 @@ fn apply_kinetic_grid_theme(ctx: &egui::Context) {
     style.visuals.widgets.noninteractive.bg_fill = SURFACE_CONTAINER;
     style.visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, ON_SURFACE_VARIANT);
 
-    style.visuals.widgets.inactive.bg_fill = SURFACE_BRIGHT;
-    style.visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, ON_SURFACE);
+    // Buttons: solid cobalt fill with dark text — must be clearly visible
+    style.visuals.widgets.inactive.bg_fill = PRIMARY;
+    style.visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.5, ON_PRIMARY);
+    style.visuals.widgets.inactive.weak_bg_fill = PRIMARY;
+    style.visuals.widgets.inactive.bg_stroke = egui::Stroke::NONE;
 
-    style.visuals.widgets.hovered.bg_fill = PRIMARY;
-    style.visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, ON_PRIMARY);
+    style.visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(0x9c, 0xcc, 0xff);
+    style.visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.5, ON_PRIMARY);
+    style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::from_rgb(0x9c, 0xcc, 0xff);
 
-    style.visuals.widgets.active.bg_fill = PRIMARY;
-    style.visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, ON_PRIMARY);
+    style.visuals.widgets.active.bg_fill = egui::Color32::from_rgb(0x5a, 0x9a, 0xe0);
+    style.visuals.widgets.active.fg_stroke = egui::Stroke::new(1.5, ON_PRIMARY);
+    style.visuals.widgets.active.weak_bg_fill = egui::Color32::from_rgb(0x5a, 0x9a, 0xe0);
 
     // Selection (checkboxes, etc.)
     style.visuals.selection.bg_fill = PRIMARY;
@@ -127,33 +132,7 @@ impl eframe::App for Wizard {
         egui::CentralPanel::default()
             .frame(egui::Frame::none().fill(SURFACE).inner_margin(0.0))
             .show(ctx, |ui| {
-                // Header bar
-                ui.allocate_ui_with_layout(
-                    egui::vec2(ui.available_width(), 48.0),
-                    egui::Layout::left_to_right(egui::Align::Center),
-                    |ui| {
-                        let rect = ui.max_rect();
-                        ui.painter()
-                            .rect_filled(rect, egui::Rounding::ZERO, SURFACE_CONTAINER_LOW);
-                        ui.add_space(16.0);
-                        ui.label(
-                            egui::RichText::new("LLM SIDEBAR SETUP")
-                                .size(14.0)
-                                .strong()
-                                .color(PRIMARY),
-                        );
-                        ui.add_space(16.0);
-                        ui.label(
-                            egui::RichText::new(step_label(self.step))
-                                .size(11.0)
-                                .color(ON_SURFACE_VARIANT),
-                        );
-                    },
-                );
-
-                ui.add_space(4.0);
-
-                // Step indicator bar
+                // Step indicator bar (compact, top)
                 ui.horizontal(|ui| {
                     let steps = [
                         Step::Welcome,
@@ -179,9 +158,30 @@ impl eframe::App for Wizard {
                     }
                 });
 
-                ui.add_space(24.0);
+                // Compact header line
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    ui.add_space(32.0);
+                    ui.label(
+                        egui::RichText::new("LLM SIDEBAR SETUP")
+                            .size(11.0)
+                            .strong()
+                            .color(PRIMARY),
+                    );
+                    ui.label(
+                        egui::RichText::new("//")
+                            .size(11.0)
+                            .color(SURFACE_BRIGHT),
+                    );
+                    ui.label(
+                        egui::RichText::new(step_label(self.step))
+                            .size(11.0)
+                            .color(ON_SURFACE_VARIANT),
+                    );
+                });
+                ui.add_space(8.0);
 
-                // Content area
+                // Content area (takes most space)
                 egui::Frame::none()
                     .inner_margin(egui::Margin::symmetric(32, 8))
                     .show(ui, |ui| match self.step {
@@ -192,13 +192,21 @@ impl eframe::App for Wizard {
                         Step::Complete => self.show_complete(ui),
                     });
 
-                // Bottom nav
+                // Bottom nav — larger buttons with padding
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
-                    ui.add_space(16.0);
+                    ui.add_space(24.0);
                     ui.horizontal(|ui| {
                         ui.add_space(32.0);
                         self.show_nav_buttons(ui);
                     });
+                    // Separator line above nav
+                    let rect = ui.available_rect_before_wrap();
+                    let line_rect = egui::Rect::from_min_size(
+                        egui::pos2(rect.left() + 32.0, rect.bottom()),
+                        egui::vec2(rect.width() - 64.0, 1.0),
+                    );
+                    ui.painter().rect_filled(line_rect, egui::Rounding::ZERO, SURFACE_BRIGHT);
+                    ui.add_space(8.0);
                 });
             });
     }
@@ -208,34 +216,42 @@ impl Wizard {
     fn show_welcome(&mut self, ui: &mut egui::Ui) {
         ui.label(
             egui::RichText::new("WELCOME")
-                .size(36.0)
+                .size(28.0)
                 .strong()
                 .color(ON_SURFACE),
         );
-        ui.add_space(16.0);
+        ui.add_space(8.0);
         ui.label(
             egui::RichText::new(
-                "This wizard will install the LLM Sidebar native companion \
-                 on your system. Here's what happens:",
+                "This wizard will install the LLM Sidebar extension and native \
+                 overlay companion on your system.",
             )
-            .size(14.0)
+            .size(13.0)
             .color(ON_SURFACE_VARIANT),
         );
-        ui.add_space(16.0);
+        ui.add_space(20.0);
+
+        ui.label(
+            egui::RichText::new("WHAT WILL HAPPEN")
+                .size(11.0)
+                .strong()
+                .color(PRIMARY),
+        );
+        ui.add_space(8.0);
 
         let steps = [
             ("01", "DETECT BROWSERS", "Find all Chromium-based browsers on your system"),
             ("02", "INSTALL COMPANION", "Copy the overlay companion native host/daemon binary"),
-            ("03", "REGISTER", "Write native messaging manifests so Chrome can find the companion"),
-            ("04", "VERIFY", "Run diagnostics to confirm the JSON-RPC bridge works"),
+            ("03", "REGISTER", "Write native messaging manifests and install the extension"),
+            ("04", "VERIFY", "Run diagnostics to confirm everything works"),
         ];
 
         for (num, title, desc) in &steps {
-            ui.add_space(4.0);
+            ui.add_space(6.0);
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new(*num)
-                        .size(24.0)
+                        .size(20.0)
                         .strong()
                         .color(PRIMARY),
                 );
@@ -243,13 +259,13 @@ impl Wizard {
                 ui.vertical(|ui| {
                     ui.label(
                         egui::RichText::new(*title)
-                            .size(12.0)
+                            .size(13.0)
                             .strong()
                             .color(ON_SURFACE),
                     );
                     ui.label(
                         egui::RichText::new(*desc)
-                            .size(11.0)
+                            .size(12.0)
                             .color(ON_SURFACE_VARIANT),
                     );
                 });
@@ -265,12 +281,12 @@ impl Wizard {
         }
 
         ui.label(
-            egui::RichText::new("BROWSER\nDETECTION")
-                .size(36.0)
+            egui::RichText::new("BROWSER DETECTION")
+                .size(28.0)
                 .strong()
                 .color(ON_SURFACE),
         );
-        ui.add_space(12.0);
+        ui.add_space(8.0);
 
         if self.detected_browsers.is_empty() {
             ui.label(
@@ -352,11 +368,11 @@ impl Wizard {
 
         ui.label(
             egui::RichText::new("INSTALLING")
-                .size(36.0)
+                .size(28.0)
                 .strong()
                 .color(ON_SURFACE),
         );
-        ui.add_space(12.0);
+        ui.add_space(8.0);
 
         if let Some(ref err) = self.install_error {
             ui.label(
@@ -381,15 +397,23 @@ impl Wizard {
                     "Copied to install directory",
                 ),
                 (
-                    "Overlay daemon foundation",
+                    "Overlay daemon",
                     report.overlay_installed,
                     if report.overlay_installed {
-                        "Ready for JSON-RPC bridge and platform-specific overlay support"
+                        "Ready for JSON-RPC bridge and overlay support"
                     } else {
-                        "Missing required overlay companion binary"
+                        "Missing overlay companion binary"
                     },
                 ),
-                ("Extension CRX", report.crx_installed, "Registered via external extension"),
+                (
+                    "Chrome extension (CRX)",
+                    report.crx_installed,
+                    if report.crx_installed {
+                        "Installed via browser policy — restart browser to activate"
+                    } else {
+                        "No .crx found next to installer"
+                    },
+                ),
             ];
 
             for (label, ok, detail) in &items {
@@ -467,11 +491,11 @@ impl Wizard {
 
         ui.label(
             egui::RichText::new("DIAGNOSTICS")
-                .size(36.0)
+                .size(28.0)
                 .strong()
                 .color(ON_SURFACE),
         );
-        ui.add_space(12.0);
+        ui.add_space(8.0);
 
         if let Some(ref report) = self.diagnostics_report {
             egui::Frame::none()
@@ -502,12 +526,12 @@ impl Wizard {
 
     fn show_complete(&mut self, ui: &mut egui::Ui) {
         ui.label(
-            egui::RichText::new("SETUP\nCOMPLETE")
-                .size(36.0)
+            egui::RichText::new("SETUP COMPLETE")
+                .size(28.0)
                 .strong()
                 .color(ON_SURFACE),
         );
-        ui.add_space(16.0);
+        ui.add_space(8.0);
 
         let has_errors = self
             .install_report
@@ -545,9 +569,9 @@ impl Wizard {
         ui.add_space(8.0);
 
         let next_steps = [
-            "Open Chrome (or your chosen browser)",
+            "Open your browser — the extension should appear automatically",
             "Click the LLM Sidebar extension icon or press Ctrl+Shift+S",
-            "Enter your API key in Settings",
+            "Enter your API key in the sidebar Settings",
             "Start chatting with full web context",
         ];
 
@@ -568,6 +592,23 @@ impl Wizard {
             });
             ui.add_space(2.0);
         }
+
+        ui.add_space(24.0);
+        if ui
+            .button(
+                egui::RichText::new("LAUNCH DEFAULT BROWSER")
+                    .size(14.0)
+                    .strong(),
+            )
+            .clicked()
+        {
+            #[cfg(windows)]
+            { let _ = std::process::Command::new("cmd").args(["/C", "start", "https://google.com"]).spawn(); }
+            #[cfg(target_os = "macos")]
+            { let _ = std::process::Command::new("open").arg("https://google.com").spawn(); }
+            #[cfg(target_os = "linux")]
+            { let _ = std::process::Command::new("xdg-open").arg("https://google.com").spawn(); }
+        }
     }
 
     fn show_nav_buttons(&mut self, ui: &mut egui::Ui) {
@@ -577,7 +618,7 @@ impl Wizard {
             match self.step {
                 Step::Welcome => {
                     if ui
-                        .button(egui::RichText::new("BEGIN SETUP  >>").size(13.0).strong())
+                        .button(egui::RichText::new("  BEGIN SETUP  >>  ").size(16.0).strong())
                         .clicked()
                     {
                         self.step = Step::BrowserDetection;
@@ -585,13 +626,13 @@ impl Wizard {
                 }
                 Step::BrowserDetection => {
                     if ui
-                        .button(egui::RichText::new("INSTALL  >>").size(13.0).strong())
+                        .button(egui::RichText::new("  INSTALL  >>  ").size(16.0).strong())
                         .clicked()
                     {
                         self.step = Step::Installing;
                     }
                     if ui
-                        .button(egui::RichText::new("<< BACK").size(13.0))
+                        .button(egui::RichText::new("  << BACK  ").size(16.0))
                         .clicked()
                     {
                         self.step = Step::Welcome;
@@ -601,7 +642,7 @@ impl Wizard {
                     if self.install_report.is_some() || self.install_error.is_some() {
                         if ui
                             .button(
-                                egui::RichText::new("VERIFY  >>").size(13.0).strong(),
+                                egui::RichText::new("  VERIFY  >>  ").size(16.0).strong(),
                             )
                             .clicked()
                         {
@@ -611,13 +652,13 @@ impl Wizard {
                 }
                 Step::Diagnostics => {
                     if ui
-                        .button(egui::RichText::new("FINISH  >>").size(13.0).strong())
+                        .button(egui::RichText::new("  FINISH  >>  ").size(16.0).strong())
                         .clicked()
                     {
                         self.step = Step::Complete;
                     }
                     if ui
-                        .button(egui::RichText::new("<< BACK").size(13.0))
+                        .button(egui::RichText::new("  << BACK  ").size(16.0))
                         .clicked()
                     {
                         self.step = Step::Installing;
@@ -625,7 +666,7 @@ impl Wizard {
                 }
                 Step::Complete => {
                     if ui
-                        .button(egui::RichText::new("CLOSE").size(13.0).strong())
+                        .button(egui::RichText::new("  CLOSE  ").size(16.0).strong())
                         .clicked()
                     {
                         std::process::exit(0);

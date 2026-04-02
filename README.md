@@ -97,11 +97,11 @@ This Chrome Extension allows you to interact with Gemini models in a sidebar, us
 
 ### Native companion platform support
 
-| Platform | Native bridge | Visible overlay window |
-|----------|---------------|------------------------|
-| Linux | Yes | No — bridge/daemon only |
-| macOS | Yes | Yes |
-| Windows | Yes | Yes |
+| Platform | Native bridge | Visible overlay window  |
+| -------- | ------------- | ----------------------- |
+| Linux    | Yes           | No — bridge/daemon only |
+| macOS    | Yes           | Yes                     |
+| Windows  | Yes           | Yes                     |
 
 The extension talks to the Rust companion through a single native-messaging host:
 `com.maceip.native_overlay_companion`.
@@ -149,7 +149,7 @@ If the native companion is installed correctly:
 
 The npm-wired installer path is:
 
-```bash
+````bash
 npm run build:package
 npm run installer:install
 - macOS / Windows should eventually show **Native OK**
@@ -177,15 +177,17 @@ native/target/release/llm-sidebar-installer uninstall
 
 # Optional: run the companion daemon directly
 native/overlay-companion/target/release/overlay-companion daemon
-```
+````
 
 This stages a bundle in `dist-installer/` containing:
+
 - `llm-sidebar-installer`
 - `overlay-companion`
 - `llm-sidebar.crx`
 - `llm-sidebar-extension-id.txt`
 
 The installer will:
+
 - Copy `overlay-companion` to `~/.local/share/llm-sidebar/` (Linux/macOS) or `%LOCALAPPDATA%\LLMSidebar\` (Windows)
 - Detect all installed Chromium browsers (Chrome, Chromium, Brave, Edge, Vivaldi, Chrome for Testing)
 - Write native messaging host manifests for each browser
@@ -195,19 +197,19 @@ For production CRX packaging, provide `CRX_PRIVATE_KEY`. The default npm packagi
 
 ### Commands Reference
 
-| Command                         | Description                                     |
-| :------------------------------ | :---------------------------------------------- |
-| `npm run build`                 | Builds the extension to `dist/`                 |
-| `npm run build:native`          | Builds the Rust host, installer, and overlay companion |
+| Command                         | Description                                                         |
+| :------------------------------ | :------------------------------------------------------------------ |
+| `npm run build`                 | Builds the extension to `dist/`                                     |
+| `npm run build:native`          | Builds the Rust host, installer, and overlay companion              |
 | `npm run build:package`         | Builds extension, native binaries, CRX, and staged installer assets |
-| `npm run installer:install`     | Builds package artifacts and runs the Rust installer |
-| `npm run installer:uninstall`   | Runs the Rust installer uninstall flow          |
-| `npm test`                      | Runs unit tests with Vitest                     |
-| `npm run lint`                  | Runs ESLint                                     |
-| `npm run format`                | Formats code with Prettier                      |
-| `npm run type-check`            | Runs TypeScript type checking                   |
-| `npm run pack-crx`              | Packs extension as signed CRX3                  |
-| `npm run test:native-companion` | Runs the Puppeteer/native companion harness     |
+| `npm run installer:install`     | Builds package artifacts and runs the Rust installer                |
+| `npm run installer:uninstall`   | Runs the Rust installer uninstall flow                              |
+| `npm test`                      | Runs unit tests with Vitest                                         |
+| `npm run lint`                  | Runs ESLint                                                         |
+| `npm run format`                | Formats code with Prettier                                          |
+| `npm run type-check`            | Runs TypeScript type checking                                       |
+| `npm run pack-crx`              | Packs extension as signed CRX3                                      |
+| `npm run test:native-companion` | Runs the Puppeteer/native companion harness                         |
 
 - copy `overlay-companion` into `~/.local/share/llm-sidebar/` (Linux/macOS) or `%LOCALAPPDATA%\LLMSidebar\` (Windows)
 - detect installed Chromium-family browsers
@@ -258,19 +260,19 @@ The harness:
 
 ### Commands reference
 
-| Command | Description |
-| :------ | :---------- |
-| `npm run build` | Builds the extension to `dist/` |
-| `npm run build:extension` | Alias for the extension build |
-| `npm run build:native` | Builds `overlay-companion` |
-| `npm run build:installer` | Builds `llm-sidebar-installer` |
-| `npm run build:installer:gui` | Builds the installer with GUI support |
-| `npm run native:install` | Runs the installer CLI |
-| `npm run native:diagnose` | Runs installer diagnostics against the installed companion |
-| `npm test` | Runs unit tests with Vitest |
-| `npm run type-check` | Runs TypeScript type checking |
-| `npm run lint` | Runs ESLint |
-| `npm run pack-crx` | Packs the extension as CRX3 |
+| Command                         | Description                                                  |
+| :------------------------------ | :----------------------------------------------------------- |
+| `npm run build`                 | Builds the extension to `dist/`                              |
+| `npm run build:extension`       | Alias for the extension build                                |
+| `npm run build:native`          | Builds `overlay-companion`                                   |
+| `npm run build:installer`       | Builds `llm-sidebar-installer`                               |
+| `npm run build:installer:gui`   | Builds the installer with GUI support                        |
+| `npm run native:install`        | Runs the installer CLI                                       |
+| `npm run native:diagnose`       | Runs installer diagnostics against the installed companion   |
+| `npm test`                      | Runs unit tests with Vitest                                  |
+| `npm run type-check`            | Runs TypeScript type checking                                |
+| `npm run lint`                  | Runs ESLint                                                  |
+| `npm run pack-crx`              | Packs the extension as CRX3                                  |
 | `npm run test:native-companion` | Runs the installer-driven Puppeteer/native companion harness |
 
 ### Project Structure

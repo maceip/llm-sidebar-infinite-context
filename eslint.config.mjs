@@ -6,7 +6,13 @@ import globals from 'globals';
 export default tseslint.config(
   // Global ignores MUST be in their own object at the top level
   {
-    ignores: ['dist/', 'coverage/', 'node_modules/', 'test-harness/**/.tmp/'],
+    ignores: [
+      'dist/',
+      'coverage/',
+      'node_modules/',
+      'test-harness/**/.tmp/',
+      'design-system/skins/',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

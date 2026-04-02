@@ -80,35 +80,78 @@ async function build() {
   }
 
   // 5. Bundle scripts
-  const esmEntryPoints = [
-    path.join(srcDir, 'scripts/background.ts'),
-    path.join(srcDir, 'scripts/sidebar.ts'),
-  ];
-
   const iifeEntryPoints = [
     path.join(srcDir, 'scripts/webExtraction.ts'),
     path.join(srcDir, 'scripts/agentdropContent.ts'),
+    path.join(srcDir, 'scripts/inputCapture.ts'),
   ];
 
-  // ESM Build (Background, Sidebar)
+  const sharedDefine = {
+    'process.env.LEGAL_NOTICE_URL': JSON.stringify(legalLinks.LEGAL_NOTICE_URL),
+    'process.env.PRIVACY_POLICY_URL': JSON.stringify(
+      legalLinks.PRIVACY_POLICY_URL,
+    ),
+    'process.env.LICENSE_URL': JSON.stringify(legalLinks.LICENSE_URL),
+  };
+
+  // ESM Build: Background service worker
   await esbuild.build({
-    entryPoints: esmEntryPoints,
+    entryPoints: [path.join(srcDir, 'scripts/background.ts')],
     bundle: true,
     outdir: path.join(distDir, 'src/scripts'),
     format: 'esm',
     platform: 'browser',
     target: ['es2022'],
     sourcemap: true,
-    define: {
-      'process.env.LEGAL_NOTICE_URL': JSON.stringify(
-        legalLinks.LEGAL_NOTICE_URL,
-      ),
-      'process.env.PRIVACY_POLICY_URL': JSON.stringify(
-        legalLinks.PRIVACY_POLICY_URL,
-      ),
-      'process.env.LICENSE_URL': JSON.stringify(legalLinks.LICENSE_URL),
-    },
+    define: sharedDefine,
   });
+
+  // ESM Build: React sidebar
+  await esbuild.build({
+    entryPoints: [path.join(srcDir, 'sidebar/index.tsx')],
+    bundle: true,
+    outfile: path.join(distDir, 'src/scripts/sidebar.js'),
+    format: 'esm',
+    platform: 'browser',
+    target: ['es2022'],
+    sourcemap: true,
+    jsx: 'automatic',
+    jsxImportSource: 'react',
+    define: sharedDefine,
+  });
+
+  // ESM Build: React onboarding page
+  await esbuild.build({
+    entryPoints: [path.join(srcDir, 'onboarding/index.tsx')],
+    bundle: true,
+    outfile: path.join(distDir, 'src/scripts/welcome.js'),
+    format: 'esm',
+    platform: 'browser',
+    target: ['es2022'],
+    sourcemap: true,
+    jsx: 'automatic',
+    jsxImportSource: 'react',
+    define: sharedDefine,
+  });
+
+  // Tailwind CSS builds
+  const { execSync } = require('child_process');
+  const tailwindCli = path.join(
+    projectRoot,
+    'node_modules/@tailwindcss/cli/dist/index.mjs',
+  );
+
+  // Sidebar (dark Metro theme)
+  execSync(
+    `node "${tailwindCli}" -i "${path.join(srcDir, 'sidebar/styles/metro.css')}" -o "${path.join(distDir, 'src/styles/metro.css')}"`,
+    { stdio: 'inherit' },
+  );
+
+  // Onboarding (light Industrial Digital theme)
+  execSync(
+    `node "${tailwindCli}" -i "${path.join(srcDir, 'onboarding/styles/onboarding.css')}" -o "${path.join(distDir, 'src/styles/onboarding.css')}"`,
+    { stdio: 'inherit' },
+  );
 
   // IIFE Build (Web Extraction)
   await esbuild.build({

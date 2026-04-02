@@ -18,92 +18,92 @@ This research identifies the **foundational "legacy" accounts** — the core inf
 
 These appear in 5-8 of the 10 analyzed trending projects and are foundational to virtually all developer work.
 
-| # | Service | Category | Trending Repo Count | Why High-Value |
-|---|---------|----------|:-------------------:|----------------|
-| 1 | **AWS** | Cloud / IaaS | 6 (S3, SDK, SES, Bedrock, EC2, CloudWatch) | Largest cloud. Account age unlocks higher service limits. Reserved instances, billing history, IAM configs are non-transferable |
-| 2 | **PostgreSQL hosting** (Supabase, Neon, RDS, self-hosted) | Database | 7 | #1 admired DB (StackOverflow). Production data + backup history = irreplaceable |
-| 3 | **Redis hosting** (Redis Cloud, ElastiCache, self-hosted) | Cache / Queue | 6 | Universal caching layer. Session data, job queues |
-| 4 | **Docker Hub** | Container Registry | 8 (Docker/Compose universal) | Image hosting, pull rate limits tied to account |
-| 5 | **GitHub** | Source Control / OAuth | 5 | Contribution history, org memberships, SSH keys, Actions minutes, PATs |
+| #   | Service                                                   | Category               |            Trending Repo Count             | Why High-Value                                                                                                                  |
+| --- | --------------------------------------------------------- | ---------------------- | :----------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **AWS**                                                   | Cloud / IaaS           | 6 (S3, SDK, SES, Bedrock, EC2, CloudWatch) | Largest cloud. Account age unlocks higher service limits. Reserved instances, billing history, IAM configs are non-transferable |
+| 2   | **PostgreSQL hosting** (Supabase, Neon, RDS, self-hosted) | Database               |                     7                      | #1 admired DB (StackOverflow). Production data + backup history = irreplaceable                                                 |
+| 3   | **Redis hosting** (Redis Cloud, ElastiCache, self-hosted) | Cache / Queue          |                     6                      | Universal caching layer. Session data, job queues                                                                               |
+| 4   | **Docker Hub**                                            | Container Registry     |        8 (Docker/Compose universal)        | Image hosting, pull rate limits tied to account                                                                                 |
+| 5   | **GitHub**                                                | Source Control / OAuth |                     5                      | Contribution history, org memberships, SSH keys, Actions minutes, PATs                                                          |
 
 ### Tier 2: Identity & Money (Hardest to Replace)
 
 These are **identity-verified**, accumulate reputation, and are the hardest accounts to recreate from scratch.
 
-| # | Service | Category | Market Position | Why High-Value |
-|---|---------|----------|-----------------|----------------|
-| 6 | **Stripe** | Payments | Gold standard; $1.4T processed in 2024 | Identity-verified, processing history builds better rates, chargeback ratio tied to account |
-| 7 | **Apple Developer Program** | App Store | Required for all iOS distribution | $99/yr, identity-bound, app review history, provisioning profiles, push notification certs |
-| 8 | **Google Play Console** | App Store | Required for all Android distribution | $25 one-time, now requires gov't ID + device verification (post-Nov 2023), testing requirements |
-| 9 | **Twilio** | SMS / Phone Numbers | Dominant; 100+ countries | Phone numbers, short codes, 10DLC campaigns take weeks to register. Throughput limits tied to account |
-| 10 | **Cloudflare** | CDN / DNS / Edge | 40-64% developer market share | Bundles DNS + CDN + DDoS + Workers + R2 + Zero Trust. Configured zones + DNS records = critical infra |
+| #   | Service                     | Category            | Market Position                        | Why High-Value                                                                                        |
+| --- | --------------------------- | ------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 6   | **Stripe**                  | Payments            | Gold standard; $1.4T processed in 2024 | Identity-verified, processing history builds better rates, chargeback ratio tied to account           |
+| 7   | **Apple Developer Program** | App Store           | Required for all iOS distribution      | $99/yr, identity-bound, app review history, provisioning profiles, push notification certs            |
+| 8   | **Google Play Console**     | App Store           | Required for all Android distribution  | $25 one-time, now requires gov't ID + device verification (post-Nov 2023), testing requirements       |
+| 9   | **Twilio**                  | SMS / Phone Numbers | Dominant; 100+ countries               | Phone numbers, short codes, 10DLC campaigns take weeks to register. Throughput limits tied to account |
+| 10  | **Cloudflare**              | CDN / DNS / Edge    | 40-64% developer market share          | Bundles DNS + CDN + DDoS + Workers + R2 + Zero Trust. Configured zones + DNS records = critical infra |
 
 ### Tier 3: Auth, Email & Comms (Reputation-Based)
 
 Accounts where **reputation accumulates over time** — sender scores, trust levels, verification status.
 
-| # | Service | Category | Trending Repo Count | Why High-Value |
-|---|---------|----------|:-------------------:|----------------|
-| 11 | **SendGrid** (Twilio) | Email API | 3 (SMTP generic) | Market leader. Sender reputation takes months to build. Free plan removed — existing accounts grandfathered |
-| 12 | **Auth0** (Okta) | Authentication | 3 (OIDC generic) | Incumbent. Configured tenants + user credential stores are extremely painful to migrate |
-| 13 | **Google OAuth** (GCP Console) | Social Login | 4 | Most common social auth. Consent screen verification for production takes weeks |
-| 14 | **Microsoft / Azure** | Cloud + OAuth | 2-3 | Enterprise standard. Azure AD tenant setup, verified publisher status |
-| 15 | **Slack** | Communication | 3 | Bot tokens, workspace integrations, app directory listings |
+| #   | Service                        | Category       | Trending Repo Count | Why High-Value                                                                                              |
+| --- | ------------------------------ | -------------- | :-----------------: | ----------------------------------------------------------------------------------------------------------- |
+| 11  | **SendGrid** (Twilio)          | Email API      |  3 (SMTP generic)   | Market leader. Sender reputation takes months to build. Free plan removed — existing accounts grandfathered |
+| 12  | **Auth0** (Okta)               | Authentication |  3 (OIDC generic)   | Incumbent. Configured tenants + user credential stores are extremely painful to migrate                     |
+| 13  | **Google OAuth** (GCP Console) | Social Login   |          4          | Most common social auth. Consent screen verification for production takes weeks                             |
+| 14  | **Microsoft / Azure**          | Cloud + OAuth  |         2-3         | Enterprise standard. Azure AD tenant setup, verified publisher status                                       |
+| 15  | **Slack**                      | Communication  |          3          | Bot tokens, workspace integrations, app directory listings                                                  |
 
 ### Tier 4: Hosting & Deployment (Where Code Runs)
 
-| # | Service | Category | Market Position | Why High-Value |
-|---|---------|----------|-----------------|----------------|
-| 16 | **Vercel** | Frontend Hosting | Dominant for Next.js/React | Team plans, domain configs, environment variables, preview deployments |
-| 17 | **GCP / Google Cloud** | Cloud / IaaS | ~10% market share | BigQuery, Firebase, GKE. Service account keys, project configs |
-| 18 | **DigitalOcean** | Cloud / VPS | Top developer-focused | Simple pricing, droplet snapshots, managed databases |
-| 19 | **Netlify** | Frontend Hosting | #2 Jamstack platform | Build configs, deploy hooks, form handling |
-| 20 | **Fly.io / Railway / Render** | App Hosting | Growing fast | Edge deployment, managed Postgres, environment configs |
+| #   | Service                       | Category         | Market Position            | Why High-Value                                                         |
+| --- | ----------------------------- | ---------------- | -------------------------- | ---------------------------------------------------------------------- |
+| 16  | **Vercel**                    | Frontend Hosting | Dominant for Next.js/React | Team plans, domain configs, environment variables, preview deployments |
+| 17  | **GCP / Google Cloud**        | Cloud / IaaS     | ~10% market share          | BigQuery, Firebase, GKE. Service account keys, project configs         |
+| 18  | **DigitalOcean**              | Cloud / VPS      | Top developer-focused      | Simple pricing, droplet snapshots, managed databases                   |
+| 19  | **Netlify**                   | Frontend Hosting | #2 Jamstack platform       | Build configs, deploy hooks, form handling                             |
+| 20  | **Fly.io / Railway / Render** | App Hosting      | Growing fast               | Edge deployment, managed Postgres, environment configs                 |
 
 ### Tier 5: Observability & Ops (Historical Data Lock-in)
 
-| # | Service | Category | Trending Repo Count | Why High-Value |
-|---|---------|----------|:-------------------:|----------------|
-| 21 | **Sentry** | Error Tracking | 3 | Configured alert rules, issue history, release tracking |
-| 22 | **Datadog** | Monitoring / APM | 1 (+ market leader) | 600+ integrations. Historical dashboards, alert policies = months of setup |
-| 23 | **PostHog** | Product Analytics | 2 | Event definitions, dashboards, feature flags, session recordings |
-| 24 | **PagerDuty** | Incident Management | Industry standard | On-call schedules, escalation policies, integration configs |
-| 25 | **Grafana Cloud** | Observability | 1 (+ open-source standard) | Prometheus + Loki + Tempo stack. Dashboard configs |
+| #   | Service           | Category            |    Trending Repo Count     | Why High-Value                                                             |
+| --- | ----------------- | ------------------- | :------------------------: | -------------------------------------------------------------------------- |
+| 21  | **Sentry**        | Error Tracking      |             3              | Configured alert rules, issue history, release tracking                    |
+| 22  | **Datadog**       | Monitoring / APM    |    1 (+ market leader)     | 600+ integrations. Historical dashboards, alert policies = months of setup |
+| 23  | **PostHog**       | Product Analytics   |             2              | Event definitions, dashboards, feature flags, session recordings           |
+| 24  | **PagerDuty**     | Incident Management |     Industry standard      | On-call schedules, escalation policies, integration configs                |
+| 25  | **Grafana Cloud** | Observability       | 1 (+ open-source standard) | Prometheus + Loki + Tempo stack. Dashboard configs                         |
 
 ### Tier 6: Database & Storage (Data Lock-in)
 
-| # | Service | Category | Trending Repo Count | Why High-Value |
-|---|---------|----------|:-------------------:|----------------|
-| 26 | **MongoDB Atlas** | Document DB | 2 | Managed clusters, backup schedules, connection strings |
-| 27 | **Supabase** | BaaS (Postgres + Auth + Realtime) | 2 | Row-level security policies, auth configs, edge functions |
-| 28 | **S3 / R2 / GCS** | Object Storage | 3 (S3) + 1 (R2) | Bucket policies, lifecycle rules, CORS configs, stored data |
-| 29 | **Elasticsearch / OpenSearch** | Search Engine | 2 | Index mappings, analyzer configs, stored indices |
-| 30 | **ClickHouse** | Analytics DB | 2 | Materialized views, aggregation configs |
+| #   | Service                        | Category                          | Trending Repo Count | Why High-Value                                              |
+| --- | ------------------------------ | --------------------------------- | :-----------------: | ----------------------------------------------------------- |
+| 26  | **MongoDB Atlas**              | Document DB                       |          2          | Managed clusters, backup schedules, connection strings      |
+| 27  | **Supabase**                   | BaaS (Postgres + Auth + Realtime) |          2          | Row-level security policies, auth configs, edge functions   |
+| 28  | **S3 / R2 / GCS**              | Object Storage                    |   3 (S3) + 1 (R2)   | Bucket policies, lifecycle rules, CORS configs, stored data |
+| 29  | **Elasticsearch / OpenSearch** | Search Engine                     |          2          | Index mappings, analyzer configs, stored indices            |
+| 30  | **ClickHouse**                 | Analytics DB                      |          2          | Materialized views, aggregation configs                     |
 
 ### Tier 7: Communication & Virtual Numbers
 
-| # | Service | Category | Market Position | Why High-Value |
-|---|---------|----------|-----------------|----------------|
-| 31 | **Vonage** (Nexmo) | SMS / Voice | #2 after Twilio | Numbers in 200+ countries, per-second billing |
-| 32 | **Telnyx** | SMS / Voice | Growing; owns network | SMS from $0.004/msg, SIP trunking |
-| 33 | **Discord** | Bot Platform | Universal dev community | Bot tokens, server integrations, webhook configs |
-| 34 | **Telegram** | Bot Platform | Growing for notifications | Bot tokens, chat IDs |
-| 35 | **Resend** | Email API | Modern newcomer | Developer-friendly, growing fast. Found in firecrawl |
+| #   | Service            | Category     | Market Position           | Why High-Value                                       |
+| --- | ------------------ | ------------ | ------------------------- | ---------------------------------------------------- |
+| 31  | **Vonage** (Nexmo) | SMS / Voice  | #2 after Twilio           | Numbers in 200+ countries, per-second billing        |
+| 32  | **Telnyx**         | SMS / Voice  | Growing; owns network     | SMS from $0.004/msg, SIP trunking                    |
+| 33  | **Discord**        | Bot Platform | Universal dev community   | Bot tokens, server integrations, webhook configs     |
+| 34  | **Telegram**       | Bot Platform | Growing for notifications | Bot tokens, chat IDs                                 |
+| 35  | **Resend**         | Email API    | Modern newcomer           | Developer-friendly, growing fast. Found in firecrawl |
 
 ### Tier 8: Domain & SSL
 
-| # | Service | Category | Market Position | Why High-Value |
-|---|---------|----------|-----------------|----------------|
-| 36 | **Cloudflare Registrar** | Domain Registration | At-cost pricing | Domains + DNS + CDN in one account |
-| 37 | **Namecheap** | Domain Registration | Popular with devs | Domain portfolio, DNS configs |
-| 38 | **Let's Encrypt / ZeroSSL** | SSL/TLS | Free standard | ACME configs, auto-renewal scripts |
+| #   | Service                     | Category            | Market Position   | Why High-Value                     |
+| --- | --------------------------- | ------------------- | ----------------- | ---------------------------------- |
+| 36  | **Cloudflare Registrar**    | Domain Registration | At-cost pricing   | Domains + DNS + CDN in one account |
+| 37  | **Namecheap**               | Domain Registration | Popular with devs | Domain portfolio, DNS configs      |
+| 38  | **Let's Encrypt / ZeroSSL** | SSL/TLS             | Free standard     | ACME configs, auto-renewal scripts |
 
 ### Tier 9: Maps & Media
 
-| # | Service | Category | Trending Repo Count | Why High-Value |
-|---|---------|----------|:-------------------:|----------------|
-| 39 | **Mapbox** | Maps | 1 (superset) | Custom map styles, tilesets, geocoding quotas |
-| 40 | **Cloudinary** | Media Processing | Market leader | Transformation pipelines, stored assets, delivery configs |
+| #   | Service        | Category         | Trending Repo Count | Why High-Value                                            |
+| --- | -------------- | ---------------- | :-----------------: | --------------------------------------------------------- |
+| 39  | **Mapbox**     | Maps             |    1 (superset)     | Custom map styles, tilesets, geocoding quotas             |
+| 40  | **Cloudinary** | Media Processing |    Market leader    | Transformation pipelines, stored assets, delivery configs |
 
 ---
 
@@ -161,24 +161,24 @@ These accounts accumulate value over time and are hardest to recreate:
 
 ## Summary: Recommended Initial Service List by Category
 
-| Category | Services |
-|----------|----------|
-| **Cloud / Compute** | AWS, GCP, Azure, DigitalOcean, Vercel, Netlify |
-| **CDN / DNS / Domains** | Cloudflare, Namecheap |
-| **Database** | PostgreSQL (Supabase/Neon/RDS), Redis, MongoDB Atlas, Elasticsearch |
-| **Object Storage** | S3, Cloudflare R2, GCS |
-| **Payments** | Stripe |
-| **Email** | SendGrid, Resend, Amazon SES |
-| **SMS / Phone** | Twilio, Vonage, Telnyx |
-| **Auth / Identity** | Auth0, Google OAuth, GitHub OAuth |
-| **App Stores** | Apple Developer, Google Play Console |
-| **Container Registry** | Docker Hub, GitHub Container Registry |
-| **Monitoring** | Sentry, Datadog, Grafana Cloud, PagerDuty |
-| **Analytics** | PostHog |
-| **Communication** | Slack, Discord, Telegram |
-| **Maps** | Mapbox |
-| **Media** | Cloudinary |
-| **SSL** | Let's Encrypt, ZeroSSL |
+| Category                | Services                                                            |
+| ----------------------- | ------------------------------------------------------------------- |
+| **Cloud / Compute**     | AWS, GCP, Azure, DigitalOcean, Vercel, Netlify                      |
+| **CDN / DNS / Domains** | Cloudflare, Namecheap                                               |
+| **Database**            | PostgreSQL (Supabase/Neon/RDS), Redis, MongoDB Atlas, Elasticsearch |
+| **Object Storage**      | S3, Cloudflare R2, GCS                                              |
+| **Payments**            | Stripe                                                              |
+| **Email**               | SendGrid, Resend, Amazon SES                                        |
+| **SMS / Phone**         | Twilio, Vonage, Telnyx                                              |
+| **Auth / Identity**     | Auth0, Google OAuth, GitHub OAuth                                   |
+| **App Stores**          | Apple Developer, Google Play Console                                |
+| **Container Registry**  | Docker Hub, GitHub Container Registry                               |
+| **Monitoring**          | Sentry, Datadog, Grafana Cloud, PagerDuty                           |
+| **Analytics**           | PostHog                                                             |
+| **Communication**       | Slack, Discord, Telegram                                            |
+| **Maps**                | Mapbox                                                              |
+| **Media**               | Cloudinary                                                          |
+| **SSL**                 | Let's Encrypt, ZeroSSL                                              |
 
 ---
 
@@ -195,6 +195,7 @@ These accounts accumulate value over time and are hardest to recreate:
 **Rust:** TabbyML/tabby, chroma-core/chroma, surrealdb/surrealdb, cube-js/cube, moghtech/komodo, farion1231/cc-switch, denoland/deno
 
 ### Market Research Sources
+
 - 2025 StackOverflow Developer Survey
 - JetBrains State of Developer Ecosystem 2025
 - Industry market share reports (6sense, Northflank, BlazingCDN, SplitMetrics)

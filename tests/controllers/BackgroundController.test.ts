@@ -809,7 +809,6 @@ describe('BackgroundController', () => {
       });
     });
 
-
     it('should forward show native overlay to the native companion service', async () => {
       const response = await controller.handleMessage({
         type: MessageTypes.SHOW_NATIVE_OVERLAY,

@@ -37,13 +37,23 @@
   },
   "homepage": "https://github.com/google/llm-sidebar-with-context#readme",
   "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.7.0",
     "marked": "^17.0.1",
+    "motion": "^12.38.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-use-measure": "^2.1.7",
+    "tailwind-merge": "^3.5.0",
     "turndown": "^7.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@tailwindcss/cli": "^4.1.4",
     "@types/chrome": "^0.1.35",
     "@types/node": "^25.0.10",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
     "@types/turndown": "^5.0.6",
     "@vitest/coverage-v8": "^4.0.18",
     "dotenv": "^17.2.4",

@@ -128,6 +128,15 @@ export interface ToggleNativeOverlayRequest {
   type: typeof MessageTypes.TOGGLE_NATIVE_OVERLAY;
 }
 
+export interface CapturedInputRequest {
+  type: typeof MessageTypes.CAPTURED_INPUT;
+  userText: string;
+  responseText?: string;
+  url: string;
+  title: string;
+  timestamp: number;
+}
+
 export interface MemoryEpisodeSummary {
   id: string;
   kind: 'turn' | 'summary';
@@ -300,7 +309,8 @@ export type ExtensionMessage =
   | NativeCompanionStatusRequest
   | ShowNativeOverlayRequest
   | HideNativeOverlayRequest
-  | ToggleNativeOverlayRequest;
+  | ToggleNativeOverlayRequest
+  | CapturedInputRequest;
 
 export interface RetrievalSnapshotEpisode {
   id: string;
